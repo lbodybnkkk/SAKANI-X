@@ -1,4 +1,79 @@
 <!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SAKANI X | لوحة إدارة السكنات</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+
+    <aside class="sidebar">
+        <div class="brand">
+            <i class="fa-solid fa-building-shield brand-icon"></i>
+            <h2>SAKANI <span>X</span></h2>
+        </div>
+        <nav class="menu">
+            <button class="nav-btn active" data-tab="dashboard">
+                <i class="fa-solid fa-chart-pie"></i> الإحصائيات
+            </button>
+            <button class="nav-btn" data-tab="add-housing">
+                <i class="fa-solid fa-plus-circle"></i> إضافة سكن جديد
+            </button>
+            <button class="nav-btn" data-tab="manage-housing">
+                <i class="fa-solid fa-list-check"></i> إدارة السكنات
+            </button>
+            <button class="nav-btn" data-tab="bookings">
+                <i class="fa-solid fa-calendar-check"></i> طلبات الحجز
+            </button>
+        </nav>
+    </aside>
+
+    <main class="content">
+        <header class="top-bar">
+            <h1>لوحة التحكم الرئيسية</h1>
+            <div class="status-badge"><i class="fa-solid fa-circle"></i> النظام متصل بـ Firebase</div>
+        </header>
+
+        <!-- Dashboard -->
+        <section id="dashboard" class="tab-content active">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon purple"><i class="fa-solid fa-house"></i></div>
+                    <div class="stat-info"><h3 id="stat-total-housing">0</h3><p>إجمالي الوحدات</p></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon gold"><i class="fa-solid fa-clock"></i></div>
+                    <div class="stat-info"><h3 id="stat-pending-bookings">0</h3><p>حجوزات معلقة</p></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon green"><i class="fa-solid fa-circle-check"></i></div>
+                    <div class="stat-info"><h3 id="stat-approved-bookings">0</h3><p>حجوزات مقبولة</p></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Add/Edit Housing -->
+        <section id="add-housing" class="tab-content">
+            <div class="form-container">
+                <h2 id="form-title">إضافة وحدة سكنية جديدة</h2>
+                <form id="housing-form">
+                    <input type="hidden" id="housing-id">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>عنوان الإعلان</label>
+                            <input type="text" id="title" placeholder="مثال: شقة مفروشة فاخرة بجوار الجامعة" required>
+                        </div>
+                        <div class="form-group">
+                            <label>المحافظة / المدينة</label>
+                            <input type="text" id="city" placeholder="مثال: المنيا" required>
+                        </div>
+                        <div class="form-group">
+                            <label>العنوان بالتفصيل</label>
+                            <input type="text" id="address" placeholder="اسم الشارع - الميدان" required>
+                        </div>
                         <div class="form-group">
                             <label>نوع السكن</label>
                             <select id="type" required>
@@ -17,11 +92,11 @@
                         </div>
                         <div class="form-group">
                             <label>الإيجار الشهري (EGP)</label>
-                            <input type="number" id="price" placeholder="مثال: 1500" required>
+                            <input type="number" id="price" placeholder="1500" required>
                         </div>
                         <div class="form-group">
                             <label>مبلغ التأمين (EGP)</label>
-                            <input type="number" id="deposit" placeholder="مثال: 1000" required>
+                            <input type="number" id="deposit" placeholder="1000" required>
                         </div>
                         <div class="form-group">
                             <label>رقم هاتف التواصل</label>
@@ -30,7 +105,7 @@
                     </div>
 
                     <div class="form-group full-width">
-                        <label>المرافق والخدمات المتاحة</label>
+                        <label>المرافق والخدمات</label>
                         <div class="checkbox-grid">
                             <label><input type="checkbox" value="إنترنت Wi-Fi" class="amenities-check"> إنترنت Wi-Fi</label>
                             <label><input type="checkbox" value="تكييف هوائي" class="amenities-check"> تكييف هوائي</label>
@@ -44,63 +119,55 @@
                     </div>
 
                     <div class="form-group full-width">
-                        <label>الوصف التفصيلي للسكن</label>
-                        <textarea id="description" rows="4" placeholder="اكتب وصفاً شاملاً للسكن والمسافة بينه وبين المواصلات والخدمات..." required></textarea>
+                        <label>الوصف التفصيلي</label>
+                        <textarea id="description" rows="4" placeholder="اكتب وصفاً شاملاً..." required></textarea>
                     </div>
 
                     <div class="form-group full-width">
-                        <label>صور السكن (يمكن رفع عدة صور - سيتم ضغطها تلقائياً)</label>
+                        <label>صور السكن</label>
                         <input type="file" id="image-input" accept="image/*" multiple>
                         <div id="image-preview" class="image-preview-container"></div>
                     </div>
 
                     <div class="form-actions">
-                        <button type="submit" id="save-btn" class="btn-primary"><i class="fa-solid fa-floppy-disk"></i> حفظ ونشر السكن</button>
-                        <button type="button" id="cancel-edit-btn" class="btn-secondary hidden"><i class="fa-solid fa-xmark"></i> إلغاء التعديل</button>
+                        <button type="submit" id="save-btn" class="btn-primary">
+                            <i class="fa-solid fa-floppy-disk"></i> حفظ ونشر السكن
+                        </button>
+                        <button type="button" id="cancel-edit-btn" class="btn-secondary hidden">
+                            <i class="fa-solid fa-xmark"></i> إلغاء التعديل
+                        </button>
                     </div>
                 </form>
             </div>
         </section>
 
-        <!-- Tab 3: Manage Housing -->
+        <!-- Manage Housing -->
         <section id="manage-housing" class="tab-content">
             <div class="table-container">
                 <table>
                     <thead>
                         <tr>
-                            <th>الصورة</th>
-                            <th>العنوان</th>
-                            <th>المدينة</th>
-                            <th>النوع</th>
-                            <th>الإيجار</th>
-                            <th>الإجراءات</th>
+                            <th>الصورة</th><th>العنوان</th><th>المدينة</th>
+                            <th>النوع</th><th>الإيجار</th><th>الإجراءات</th>
                         </tr>
                     </thead>
-                    <tbody id="housing-table-body">
-                        <!-- Data dynamically loaded -->
-                    </tbody>
+                    <tbody id="housing-table-body"></tbody>
                 </table>
             </div>
         </section>
 
-        <!-- Tab 4: Bookings -->
+        <!-- Bookings -->
         <section id="bookings" class="tab-content">
             <div class="table-container">
                 <table>
                     <thead>
                         <tr>
-                            <th>اسم المتقدم</th>
-                            <th>رقم الهاتف</th>
-                            <th>السكن المطلـوب</th>
-                            <th>تاريخ الانتقال</th>
-                            <th>ملاحظات</th>
-                            <th>الحالة</th>
-                            <th>التحكم</th>
+                            <th>المتقدم</th><th>الهاتف</th><th>المحافظة</th>
+                            <th>السكن</th><th>من - إلى</th><th>ملاحظات</th>
+                            <th>الحالة</th><th>التحكم</th>
                         </tr>
                     </thead>
-                    <tbody id="bookings-table-body">
-                        <!-- Data dynamically loaded -->
-                    </tbody>
+                    <tbody id="bookings-table-body"></tbody>
                 </table>
             </div>
         </section>
