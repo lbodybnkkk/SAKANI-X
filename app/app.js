@@ -1,292 +1,322 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { 
-  getAuth, 
-  GoogleAuthProvider, 
-  signInWithPopup, 
-  signInWithEmailAndPassword, 
-  createUserWithEmailAndPassword, 
-  onAuthStateChanged, 
-  signOut 
-} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { 
-  getDatabase, 
-  ref, 
-  set, 
-  push, 
-  onValue, 
-  get 
-} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+// app.js — منطق منصة SAKANI-X المشترك بين جميع الصفحات
+import {
+  auth, db,
+  onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword,
+  signInWithPopup, GoogleAuthProvider, signOut, updateProfile,
+  ref, set, get, push, update, remove, onValue, child, query, orderByChild, equalTo
+} from "./firebase-config.js";
 
-// إعداد الفايربيس الخاص بمشروعك
-const firebaseConfig = {
-  databaseURL: "https://cmd1-1c696-default-rtdb.firebaseio.com/",
-  authDomain: "cmd1-1c696.firebaseapp.com",
-  projectId: "cmd1-1c696"
-};
-
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getDatabase(app);
-const googleProvider = new GoogleAuthProvider();
-
-let currentUser = null;
-let currentSelectedBed = null;
-
-// نظام الإشعارات البديل لـ alert
-export function showToast(message, type = 'info') {
-  let toastContainer = document.getElementById('toast-container');
-  if (!toastContainer) {
-    toastContainer = document.createElement('div');
-    toastContainer.id = 'toast-container';
-    toastContainer.className = 'toast-container';
-    document.body.appendChild(toastContainer);
-  }
-
-  const toast = document.createElement('div');
-  toast.className = `toast-item toast-${type}`;
-  toast.innerHTML = `
-    <i class="fa-solid ${type === 'success' ? 'fa-circle-check' : type === 'error' ? 'fa-circle-exclamation' : 'fa-circle-info'}"></i>
-    <span>${message}</span>
-  `;
-
-  toastContainer.appendChild(toast);
-  setTimeout(() => toast.classList.add('show'), 10);
-
-  setTimeout(() => {
-    toast.classList.remove('show');
-    setTimeout(() => toast.remove(), 300);
-  }, 3500);
-}
-
-// متابعة حالة المستخدم وتحديث الواجهة
-onAuthStateChanged(auth, (user) => {
-  currentUser = user;
-  updateProfileUI(user);
-});
-
-// 1. جلب السكنات المضافة من الفايربيس فقط
-export function listenToFirebaseHousings() {
-  const container = document.getElementById("listingsContainer");
-  if (!container) return;
-
-  container.innerHTML = `<div style="text-align:center; padding: 40px; color: var(--text-muted);">جاري تحميل السكنات المتاحة...</div>`;
-
-  const housingsRef = ref(db, 'housings');
-  onValue(housingsRef, (snapshot) => {
-    const data = snapshot.val();
-    if (!data) {
-      container.innerHTML = `<div style="text-align:center; padding: 40px; color: var(--text-muted);">لا توجد سكنات مضافة حالياً من الإدارة.</div>`;
-      return;
-    }
-
-    const items = Object.keys(data).map(key => ({ id: key, ...data[key] }));
-    container.innerHTML = items.map(item => `
-      <a href="details.html?id=${item.id}" class="housing-card">
-        <div class="card-media">
-          <img src="${item.image || 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af'}" alt="${item.title}">
-          <div class="badge-tag ${item.gender === 'girls' ? 'gender-girls' : 'gender-boys'}">
-            ${item.gender === 'girls' ? 'سكن طالبات' : 'سكن طلاب'}
-          </div>
-        </div>
-        <div class="card-body">
-          <div class="card-price">${Number(item.price || 0).toLocaleString()} ج.م <span>/ شهرياً</span></div>
-          <h3 class="card-title">${item.title}</h3>
-          <div class="card-location">
-            <i class="fa-solid fa-location-dot" style="color: var(--accent-gold);"></i>
-            <span>${item.location || 'غير محدد'}</span>
-          </div>
-        </div>
-      </a>
-    `).join('');
-  }, (err) => {
-    showToast("خطأ في جلب البيانات: " + err.message, "error");
-  });
-}
-
-// 2. تسجيل الدخول بجوجل
-window.handleGoogleLogin = async function() {
-  try {
-    const result = await signInWithPopup(auth, googleProvider);
-    showToast(`أهلاً بك ${result.user.displayName || ''}`, "success");
-    window.closeAuthModal();
-  } catch (err) {
-    showToast("فشل تسجيل الدخول بجوجل: " + err.message, "error");
-  }
-};
-
-// 3. تسجيل الدخول بالبريد ومربوط دون إعادة تحويل (منع الكراش)
-window.handleEmailAuth = async function(event) {
-  event.preventDefault();
-  const email = document.getElementById("authEmail").value;
-  const password = document.getElementById("authPassword").value;
-
-  if (!email || !password) {
-    showToast("يرجى إدخال البريد وكلمة المرور", "error");
-    return;
-  }
-
-  try {
-    await signInWithEmailAndPassword(auth, email, password);
-    showToast("تم تسجيل الدخول بنجاح", "success");
-    window.closeAuthModal();
-  } catch (error) {
-    if (error.code === 'auth/user-not-found') {
-      try {
-        await createUserWithEmailAndPassword(auth, email, password);
-        showToast("تم إنشاء حساب جديد بنجاح", "success");
-        window.closeAuthModal();
-      } catch (cErr) {
-        showToast("خطأ في الإنشاء: " + cErr.message, "error");
-      }
-    } else {
-      showToast("بيانات الدخول غير صحيحة", "error");
-    }
-  }
-};
-
-// 4. تحميل تفاصيل السكن والأسرة المتاحة
-window.loadPropertyDetails = async function() {
-  const params = new URLSearchParams(window.location.search);
-  const propId = params.get('id');
-  if (!propId) return;
-
-  const snapshot = await get(ref(db, `housings/${propId}`));
-  if (!snapshot.exists()) {
-    showToast("السكن غير متوفر", "error");
-    return;
-  }
-
-  const item = snapshot.val();
-  document.getElementById("propTitle").innerText = item.title;
-  document.getElementById("propLocation").innerText = item.location;
-  document.getElementById("propPrice").innerText = `${Number(item.price).toLocaleString()} ج.م`;
-  document.getElementById("propImage").src = item.image || 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af';
-
-  const bedsGrid = document.getElementById("bedsGrid");
-  if (item.beds && Array.isArray(item.beds)) {
-    bedsGrid.innerHTML = item.beds.map((bed, idx) => `
-      <div class="bed-card ${bed.status}" onclick="window.selectBed('${bed.id || idx}', this, '${bed.status}')">
-        <i class="fa-solid fa-bed"></i>
-        <div style="font-weight:700; font-size:13px;">${bed.roomName || 'سرير'}</div>
-        <div style="font-size:11px;">${bed.status === 'available' ? 'متاح' : 'محجوز'}</div>
-      </div>
-    `).join('');
-  } else {
-    bedsGrid.innerHTML = `<p style="color:var(--text-muted)">لا تفاصيل أسرة مسجلة لهذا السكن.</p>`;
-  }
-};
-
-window.selectBed = function(bedId, el, status) {
-  if (status === 'occupied') {
-    showToast("هذا السرير محجوز بالفعل", "error");
-    return;
-  }
-  document.querySelectorAll('.bed-card').forEach(b => b.classList.remove('selected'));
-  el.classList.add('selected');
-  currentSelectedBed = bedId;
-};
-
-// 5. تأكيد الحجز المباشر في الفايربيس
-window.confirmBooking = async function() {
-  if (!currentUser) {
-    showToast("سجل دخولك أولاً للحجز", "info");
-    window.toggleAuthModal(true);
-    return;
-  }
-
-  if (!currentSelectedBed) {
-    showToast("يرجى اختيار السرير المفضل قبل الحجز", "info");
-    return;
-  }
-
-  const params = new URLSearchParams(window.location.search);
-  const propId = params.get('id');
-
-  try {
-    const bookingRef = push(ref(db, 'bookings'));
-    await set(bookingRef, {
-      userId: currentUser.uid,
-      userEmail: currentUser.email,
-      propertyId: propId,
-      bedId: currentSelectedBed,
-      createdAt: new Date().toISOString(),
-      status: "pending"
+/* ========================= 1) الوضع الليلي (Dark Mode) ========================= */
+export function initDarkMode() {
+  const saved = localStorage.getItem("sakani_theme") || "light";
+  document.documentElement.setAttribute("data-theme", saved);
+  document.querySelectorAll(".dark-toggle").forEach(t => {
+    t.checked = saved === "dark";
+    t.addEventListener("change", () => {
+      const mode = t.checked ? "dark" : "light";
+      document.documentElement.setAttribute("data-theme", mode);
+      localStorage.setItem("sakani_theme", mode);
+      document.querySelectorAll(".dark-toggle").forEach(o => (o.checked = t.checked));
     });
+  });
+}
 
-    showToast("تم الحجز بنجاح!", "success");
-    setTimeout(() => window.location.href = "bookings.html", 1500);
-  } catch (err) {
-    showToast("حدث خطأ أثناء الحجز: " + err.message, "error");
+/* ========================= 2) الهيدر + القائمة الجانبية + الشريط السفلي ========================= */
+const HEADER_HTML = `
+<header class="topbar">
+  <button class="icon-btn" id="openDrawerBtn" aria-label="القائمة">
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+  </button>
+  <a href="index.html" class="logo">SAKANI<span>-X</span></a>
+  <a href="profile.html" class="icon-btn avatar-btn" id="profileBtn" aria-label="حسابي">
+    <img id="topAvatar" src="https://api.dicebear.com/7.x/initials/svg?seed=SX" alt="">
+  </a>
+</header>
+
+<div class="drawer-overlay" id="drawerOverlay"></div>
+<aside class="drawer" id="drawer">
+  <div class="drawer-head">
+    <img id="drawerAvatar" src="https://api.dicebear.com/7.x/initials/svg?seed=SX" alt="">
+    <div>
+      <p class="drawer-name" id="drawerName">زائر</p>
+      <p class="drawer-email" id="drawerEmail">سجّل الدخول للمتابعة</p>
+    </div>
+    <button class="icon-btn" id="closeDrawerBtn">✕</button>
+  </div>
+
+  <div class="drawer-item toggle-row">
+    <span>🌙 الوضع الليلي</span>
+    <label class="switch"><input type="checkbox" class="dark-toggle"><span class="slider"></span></label>
+  </div>
+
+  <a class="drawer-item" href="profile.html">👤 حسابي</a>
+  <a class="drawer-item" href="profile.html#academic">🎓 ملف الطالب الجامعي</a>
+  <a class="drawer-item" href="dashboard.html">🏢 لوحة التحكم (عقاراتي)</a>
+  <a class="drawer-item" href="favorites.html">❤️ المفضلة</a>
+  <a class="drawer-item" href="bookings.html">📖 حجوزاتي</a>
+  <a class="drawer-item" href="#" id="notifLink">🔔 الإشعارات <span class="badge" id="notifCount">0</span></a>
+  <a class="drawer-item" href="support.html">🛟 الدعم الفني</a>
+  <button class="drawer-item auth-btn" id="authActionBtn">🔐 تسجيل الدخول</button>
+</aside>
+
+<nav class="bottom-nav">
+  <a href="index.html" data-page="index"><span>🏠</span>الرئيسية</a>
+  <a href="support.html" data-page="support"><span>🛟</span>الدعم</a>
+  <a href="index.html#search" data-page="search"><span>🔍</span>البحث</a>
+  <a href="favorites.html" data-page="favorites"><span>❤️</span>المفضلة</a>
+  <a href="bookings.html" data-page="bookings"><span>📖</span>حجوزاتي</a>
+</nav>
+`;
+
+export function mountShell(activePage) {
+  const shellHost = document.getElementById("app-shell");
+  if (!shellHost) return;
+  shellHost.innerHTML = HEADER_HTML;
+
+  const drawer = document.getElementById("drawer");
+  const overlay = document.getElementById("drawerOverlay");
+  document.getElementById("openDrawerBtn").onclick = () => { drawer.classList.add("open"); overlay.classList.add("show"); };
+  document.getElementById("closeDrawerBtn").onclick = closeDrawer;
+  overlay.onclick = closeDrawer;
+  function closeDrawer() { drawer.classList.remove("open"); overlay.classList.remove("show"); }
+
+  document.querySelectorAll(`.bottom-nav a[data-page="${activePage}"]`).forEach(a => a.classList.add("active"));
+
+  initDarkMode();
+  watchAuthState();
+  watchNotifications();
+}
+
+/* ========================= 3) حالة تسجيل الدخول ========================= */
+export let currentUser = null;
+
+function watchAuthState() {
+  onAuthStateChanged(auth, async (user) => {
+    currentUser = user;
+    const nameEl = document.getElementById("drawerName");
+    const emailEl = document.getElementById("drawerEmail");
+    const authBtn = document.getElementById("authActionBtn");
+    const avatarEls = [document.getElementById("topAvatar"), document.getElementById("drawerAvatar")];
+
+    if (user) {
+      const seed = encodeURIComponent(user.displayName || user.email || "SX");
+      avatarEls.forEach(el => el && (el.src = user.photoURL || `https://api.dicebear.com/7.x/initials/svg?seed=${seed}`));
+      if (nameEl) nameEl.textContent = user.displayName || "طالب مسجل";
+      if (emailEl) emailEl.textContent = user.email || "";
+      if (authBtn) {
+        authBtn.textContent = "🚪 تسجيل الخروج";
+        authBtn.onclick = () => signOut(auth);
+      }
+      document.dispatchEvent(new CustomEvent("sakani:auth", { detail: { user } }));
+    } else {
+      if (nameEl) nameEl.textContent = "زائر";
+      if (emailEl) emailEl.textContent = "سجّل الدخول للمتابعة";
+      if (authBtn) {
+        authBtn.textContent = "🔐 تسجيل الدخول";
+        authBtn.onclick = () => { window.location.href = "profile.html"; };
+      }
+      document.dispatchEvent(new CustomEvent("sakani:auth", { detail: { user: null } }));
+    }
+  });
+}
+
+export async function loginEmail(email, password) {
+  return signInWithEmailAndPassword(auth, email, password);
+}
+export async function registerEmail(email, password, name) {
+  const cred = await createUserWithEmailAndPassword(auth, email, password);
+  await updateProfile(cred.user, { displayName: name });
+  await set(ref(db, `users/${cred.user.uid}/profile`), {
+    firstName: name, email, createdAt: Date.now()
+  });
+  return cred;
+}
+export async function loginGoogle() {
+  return signInWithPopup(auth, new GoogleAuthProvider());
+}
+export async function logout() { return signOut(auth); }
+
+/* ========================= 4) الإشعارات ========================= */
+function watchNotifications() {
+  const badge = document.getElementById("notifCount");
+  onAuthStateChanged(auth, (user) => {
+    if (!user || !badge) { if (badge) badge.style.display = "none"; return; }
+    const notifRef = ref(db, `users/${user.uid}/notifications`);
+    onValue(notifRef, (snap) => {
+      const data = snap.val() || {};
+      const unread = Object.values(data).filter(n => !n.read).length;
+      badge.textContent = unread;
+      badge.style.display = unread > 0 ? "inline-flex" : "none";
+    });
+  });
+}
+
+/* ========================= 5) بيانات تجريبية (Seed) ========================= */
+export const SAMPLE_PROPERTIES = {
+  p1: {
+    title: "سكن الأمانة للطالبات", city: "عمّان", area: "شارع الجامعة",
+    type: "بنات", price: 85, deposit: 50, verified: true, topRequested: true,
+    rating: 4.7, availableBeds: 6, totalBeds: 12,
+    lat: 32.0186, lng: 35.8734,
+    images: [
+      "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=900",
+      "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=900",
+      "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=900"
+    ],
+    description: "سكن طلابي مجهز بالكامل قريب من الحرم الجامعي، أجواء عائلية وإشراف يومي.",
+    availableFrom: "2026-09-01", availableTo: "2027-06-30",
+    utilities: "الكهرباء والغاز والمياه على الطلاب بالتساوي شهرياً.",
+    amenities: ["Wi-Fi", "غسالة", "ثلاجة", "ديب فريزر", "سخان", "حمام مجهز"],
+    rooms: {
+      r1: { name: "غرفة 1", beds: { b1: { available: true }, b2: { available: false }, b3: { available: true } } },
+      r2: { name: "غرفة 2", beds: { b1: { available: true }, b2: { available: true } } }
+    }
+  },
+  p2: {
+    title: "استراحة الطلاب - شباب", city: "إربد", area: "الحي الجامعي",
+    type: "شباب", price: 60, deposit: 40, verified: false, topRequested: false,
+    rating: 4.2, availableBeds: 3, totalBeds: 10,
+    lat: 32.5556, lng: 35.8500,
+    images: [
+      "https://images.unsplash.com/photo-1493809842364-78817add7ffb?w=900",
+      "https://images.unsplash.com/photo-1560185127-6ed189bf02f4?w=900"
+    ],
+    description: "سكن اقتصادي بموقع مميز وخدمة نظافة أسبوعية.",
+    availableFrom: "2026-09-01", availableTo: "2027-06-30",
+    utilities: "فاتورة موحدة تقسم على عدد الطلاب في نهاية كل شهر.",
+    amenities: ["Wi-Fi", "غسالة", "ثلاجة"],
+    rooms: {
+      r1: { name: "غرفة 1", beds: { b1: { available: true }, b2: { available: false } } }
+    }
+  },
+  p3: {
+    title: "بيت الطالبات الجديد", city: "الزرقاء", area: "قرب الجامعة الهاشمية",
+    type: "طالبات", price: 95, deposit: 60, verified: true, topRequested: true,
+    rating: 4.9, availableBeds: 2, totalBeds: 8,
+    lat: 32.0728, lng: 36.0876,
+    images: ["https://images.unsplash.com/photo-1595526114035-0d45ed16cfbf?w=900"],
+    description: "سكن حديث افتتح هذا العام بتجهيزات فندقية وحراسة على مدار الساعة.",
+    availableFrom: "2026-09-15", availableTo: "2027-07-01",
+    utilities: "متضمنة ضمن الإيجار الشهري بالكامل.",
+    amenities: ["Wi-Fi", "تكييف", "غسالة", "ثلاجة", "ديب فريزر", "سخان", "حمام مجهز"],
+    rooms: {
+      r1: { name: "غرفة 1", beds: { b1: { available: true } } },
+      r2: { name: "غرفة 2", beds: { b1: { available: true }, b2: { available: false } } }
+    }
   }
 };
 
-// 6. تحميل حجوزات المستخدم
-window.loadUserBookings = async function() {
-  const container = document.getElementById("userBookingsContainer");
-  if (!container) return;
-
-  onAuthStateChanged(auth, async (user) => {
-    if (!user) {
-      container.innerHTML = `<p style="text-align:center; padding:30px;">يرجى تسجيل الدخول لعرض حجوزاتك.</p>`;
-      return;
-    }
-
-    const snapshot = await get(ref(db, 'bookings'));
-    if (!snapshot.exists()) {
-      container.innerHTML = `<p style="text-align:center; padding:30px;">لا توجد حجوزات سابقة.</p>`;
-      return;
-    }
-
-    const bookings = snapshot.val();
-    const myBookings = Object.keys(bookings)
-      .map(k => ({ id: k, ...bookings[k] }))
-      .filter(b => b.userId === user.uid);
-
-    if (myBookings.length === 0) {
-      container.innerHTML = `<p style="text-align:center; padding:30px;">لا توجد حجوزات سابقة مسجلة باسمك.</p>`;
-      return;
-    }
-
-    container.innerHTML = myBookings.map(b => `
-      <div class="profile-card">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-          <h4 style="font-weight:800;">طلب حجز #${b.id.slice(-5)}</h4>
-          <span style="background:var(--accent-gold); color:#fff; padding:4px 8px; border-radius:8px; font-size:12px;">${b.status}</span>
-        </div>
-        <p style="font-size:13px; color:var(--text-muted); margin-top:8px;">السرير المحجوز: ${b.bedId}</p>
-        <p style="font-size:12px; color:var(--text-muted);">التاريخ: ${new Date(b.createdAt).toLocaleDateString('ar-EG')}</p>
-      </div>
-    `).join('');
-  });
-};
-
-function updateProfileUI(user) {
-  const container = document.getElementById("profileSection");
-  if (!container) return;
-
-  if (user) {
-    container.innerHTML = `
-      <div class="profile-card">
-        <div class="profile-info">
-          <div class="profile-avatar"><i class="fa-solid fa-user"></i></div>
-          <div>
-            <h4 style="font-weight: 800;">${user.displayName || 'مستخدم SAKANI-X'}</h4>
-            <p style="font-size: 13px; color: var(--text-muted);">${user.email}</p>
-          </div>
-        </div>
-        <button onclick="window.handleSignOut()" class="btn-submit-luxury" style="margin-top: 15px; background: #ef4444;">تسجيل الخروج</button>
-      </div>
-    `;
-  } else {
-    container.innerHTML = `
-      <div class="profile-card" style="text-align: center;">
-        <p style="margin-bottom: 12px; font-weight: 700;">قم بتسجيل الدخول لمتابعة حسابك وحجوزاتك</p>
-        <button onclick="window.toggleAuthModal(true)" class="btn-submit-luxury">تسجيل الدخول / إنشاء حساب</button>
-      </div>
-    `;
+export async function seedSampleDataIfEmpty() {
+  const snap = await get(ref(db, "properties"));
+  if (!snap.exists()) {
+    await set(ref(db, "properties"), SAMPLE_PROPERTIES);
   }
 }
 
-window.handleSignOut = () => signOut(auth).then(() => showToast("تم تسجيل الخروج بنجاح", "info"));
-window.toggleAuthModal = (show) => document.getElementById("authModal")?.classList.toggle("active", show);
-window.closeAuthModal = () => window.toggleAuthModal(false);
+export async function getAllProperties() {
+  try {
+    const snap = await get(ref(db, "properties"));
+    if (snap.exists()) return snap.val();
+  } catch (e) { console.warn("تعذر الاتصال بقاعدة البيانات، سيتم استخدام بيانات تجريبية محلية.", e); }
+  return SAMPLE_PROPERTIES;
+}
+
+export async function getProperty(id) {
+  try {
+    const snap = await get(ref(db, `properties/${id}`));
+    if (snap.exists()) return snap.val();
+  } catch (e) { /* fallback */ }
+  return SAMPLE_PROPERTIES[id] || null;
+}
+
+/* ========================= 6) المفضلة ========================= */
+export async function toggleFavorite(propId) {
+  if (!currentUser) { alert("سجّل الدخول أولاً لإضافة السكن للمفضلة"); return false; }
+  const favRef = ref(db, `users/${currentUser.uid}/favorites/${propId}`);
+  const snap = await get(favRef);
+  if (snap.exists()) { await remove(favRef); return false; }
+  await set(favRef, true);
+  return true;
+}
+export async function isFavorite(propId) {
+  if (!currentUser) return false;
+  const snap = await get(ref(db, `users/${currentUser.uid}/favorites/${propId}`));
+  return snap.exists();
+}
+export async function getFavoriteIds() {
+  if (!currentUser) return [];
+  const snap = await get(ref(db, `users/${currentUser.uid}/favorites`));
+  return snap.exists() ? Object.keys(snap.val()) : [];
+}
+
+/* ========================= 7) الحجوزات ========================= */
+export async function createBooking(propId, bedInfo) {
+  if (!currentUser) { alert("سجّل الدخول أولاً لإتمام الحجز"); return null; }
+  const bookingRef = push(ref(db, `bookings`));
+  const booking = {
+    id: bookingRef.key,
+    userId: currentUser.uid,
+    propId, ...bedInfo,
+    status: "قيد المراجعة",
+    createdAt: Date.now()
+  };
+  await set(bookingRef, booking);
+  await set(ref(db, `users/${currentUser.uid}/bookings/${bookingRef.key}`), true);
+  return booking;
+}
+export async function getMyBookings() {
+  if (!currentUser) return [];
+  const snap = await get(ref(db, `users/${currentUser.uid}/bookings`));
+  if (!snap.exists()) return [];
+  const ids = Object.keys(snap.val());
+  const results = [];
+  for (const id of ids) {
+    const b = await get(ref(db, `bookings/${id}`));
+    if (b.exists()) results.push(b.val());
+  }
+  return results;
+}
+
+/* ========================= 8) بطاقة السكن (Card) ========================= */
+export function propertyCardHTML(id, p) {
+  return `
+  <article class="prop-card" data-id="${id}">
+    <div class="prop-img-wrap">
+      <img src="${p.images?.[0] || ''}" alt="${p.title}" loading="lazy">
+      <button class="fav-btn" data-fav="${id}">🤍</button>
+      <span class="badge-verify ${p.verified ? 'yes' : 'no'}">${p.verified ? '✔ موثق' : 'غير موثق'}</span>
+      <span class="badge-type">${p.type}</span>
+    </div>
+    <div class="prop-body">
+      <h3>${p.title}</h3>
+      <p class="prop-loc">📍 ${p.area}, ${p.city}</p>
+      <div class="prop-meta">
+        <span>🛏️ ${p.availableBeds}/${p.totalBeds} سرير متاح</span>
+        <span>⭐ ${p.rating}</span>
+      </div>
+      <div class="prop-price-row">
+        <div>
+          <strong>${p.price} د.أ</strong><span>/شهرياً</span>
+          <p class="deposit">تأمين مسترد: ${p.deposit} د.أ</p>
+        </div>
+        <a class="btn-details" href="details.html?id=${id}">تفاصيل السكن</a>
+      </div>
+    </div>
+  </article>`;
+}
+
+export function bindFavButtons(container) {
+  container.querySelectorAll("[data-fav]").forEach(btn => {
+    const id = btn.dataset.fav;
+    isFavorite(id).then(fav => (btn.textContent = fav ? "❤️" : "🤍"));
+    btn.addEventListener("click", async (e) => {
+      e.preventDefault(); e.stopPropagation();
+      const nowFav = await toggleFavorite(id);
+      btn.textContent = nowFav ? "❤️" : "🤍";
+    });
+  });
+}
+
+export function getQueryParam(name) {
+  return new URLSearchParams(window.location.search).get(name);
+}
