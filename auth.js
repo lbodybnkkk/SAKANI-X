@@ -2,7 +2,8 @@
 import { 
     auth, googleProvider, facebookProvider,
     signInWithPopup, signOut, onAuthStateChanged,
-    createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile
+    createUserWithEmailAndPassword, signInWithEmailAndPassword, 
+    updateProfile, sendPasswordResetEmail
 } from "./firebase-config.js";
 import { db, ref, set, get } from "./firebase-config.js";
 
@@ -40,7 +41,6 @@ onAuthStateChanged(auth, async (user) => {
         const snapshot = await get(userRef);
         
         if (!snapshot.exists()) {
-            // حساب جديد — ننشئ بروفايل فارغ
             await set(userRef, {
                 name: user.displayName || "",
                 email: user.email,
@@ -115,29 +115,12 @@ async function handleEmailAuth(isSignUp) {
     const name = document.getElementById("authName")?.value.trim() || "";
     const submitBtn = document.getElementById("authSubmitBtn");
     
-    // ✅ التحقق من المدخلات أولاً (بدون رسائل Firebase الطويلة)
-    if (!email) {
-        showToast("📧 برجاء إدخال البريد الإلكتروني", "error");
-        return;
-    }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-        showToast("📧 صيغة البريد الإلكتروني غير صحيحة", "error");
-        return;
-    }
-    if (!password) {
-        showToast("🔒 برجاء إدخال كلمة المرور", "error");
-        return;
-    }
-    if (password.length < 6) {
-        showToast("🔒 كلمة المرور يجب أن تكون 6 أحرف على الأقل", "error");
-        return;
-    }
-    if (isSignUp && !name) {
-        showToast("👤 برجاء إدخال الاسم الكامل", "error");
-        return;
-    }
+    if (!email) return showToast("📧 برجاء إدخال البريد الإلكتروني", "error");
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return showToast("📧 صيغة البريد الإلكتروني غير صحيحة", "error");
+    if (!password) return showToast("🔒 برجاء إدخال كلمة المرور", "error");
+    if (password.length < 6) return showToast("🔒 كلمة المرور يجب أن تكون 6 أحرف على الأقل", "error");
+    if (isSignUp && !name) return showToast("👤 برجاء إدخال الاسم الكامل", "error");
     
-    // Disable button أثناء التنفيذ
     if (submitBtn) {
         submitBtn.disabled = true;
         submitBtn.innerText = isSignUp ? "جاري إنشاء الحساب..." : "جاري الدخول...";
@@ -164,6 +147,18 @@ async function handleEmailAuth(isSignUp) {
     }
 }
 
+// ========== نسيت كلمة المرور ==========
+async function resetPassword() {
+    const email = document.getElementById("authEmail")?.value.trim();
+    if (!email) return showToast("📧 أدخل بريدك الإلكتروني أولاً", "error");
+    try {
+        await sendPasswordResetEmail(auth, email);
+        showToast("📧 تم إرسال رابط إعادة التعيين لبريدك", "success");
+    } catch (error) {
+        showToast(translateAuthError(error), "error");
+    }
+}
+
 // ========== تسجيل الخروج ==========
 async function logoutUser() {
     try {
@@ -175,7 +170,7 @@ async function logoutUser() {
     }
 }
 
-// ========== التحقق من البروفايل قبل الحجز ==========
+// ========== التحقق من البروفايل ==========
 async function isProfileComplete() {
     if (!currentUser) return false;
     const snap = await get(ref(db, `users/${currentUser.uid}`));
@@ -200,19 +195,8 @@ function showToast(message, type = "info") {
     }, 3500);
 }
 
-function requireAuth(callback) {
-    if (auth.currentUser) {
-        callback(auth.currentUser);
-    } else {
-        authCallbacks.push((user) => {
-            if (user) callback(user);
-        });
-    }
-}
-
 export { 
     currentUser, userProfile, loginWithGoogle, loginWithFacebook, 
-    handleEmailAuth, logoutUser, isProfileComplete, showToast, 
-    translateAuthError, onAuthStateChanged, auth,
-    requireAuth
+    handleEmailAuth, logoutUser, isProfileComplete, showToast,
+    translateAuthError, onAuthStateChanged, auth, resetPassword
 };
