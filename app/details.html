@@ -1,63 +1,171 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>تفاصيل السكن | SAKANI-X</title>
-  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
-  <link rel="stylesheet" href="style.css" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>تفاصيل السكن | SAKANI-X</title>
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 </head>
-<body style="padding-bottom: 110px;">
+<body>
+<div id="app-shell"></div>
 
-  <header class="app-header">
-    <a href="index.html" style="color: #fff; text-decoration: none;"><i class="fa-solid fa-arrow-right" style="font-size: 18px;"></i></a>
-    <span style="font-weight: 800;">تفاصيل السكن</span>
-    <div style="width: 20px;"></div>
-  </header>
+<div class="container" id="detailsContainer" style="padding-top:16px;">
+  <div class="gallery-main"><img id="mainImg" src="" alt=""></div>
+  <div class="gallery-thumbs" id="thumbs"></div>
 
-  <div style="padding: 20px;">
-    <div style="position: relative; height: 220px; border-radius: var(--radius-lg); overflow: hidden; border: 1px solid var(--border-color);">
-      <img id="propImage" src="" alt="السكن" style="width: 100%; height: 100%; object-fit: cover;" />
-    </div>
+  <div class="badge-row" id="badgeRow"></div>
 
-    <div style="margin-top: 15px;">
-      <h2 id="propTitle" style="font-size: 20px; font-weight: 800;">--</h2>
-      <p id="propLocation" style="color: var(--text-muted); font-size: 14px; margin-top: 5px;"><i class="fa-solid fa-location-dot" style="color: var(--accent-gold);"></i> --</p>
-    </div>
+  <h1 id="propTitle" style="margin:4px 0 2px;"></h1>
+  <p id="propLoc" style="color:var(--muted);margin:0 0 14px;"></p>
 
-    <hr style="border: none; border-top: 1px solid var(--border-color); margin: 20px 0;" />
-
-    <h4 style="font-size: 15px; font-weight: 800; margin-bottom: 8px;">حدد السرير المطلوب للحجز:</h4>
-    <div class="beds-container" id="bedsGrid"></div>
+  <div class="card" style="margin-bottom:16px;">
+    <h3>📝 الوصف</h3>
+    <p id="propDesc"></p>
+    <p><strong>فترة الإتاحة:</strong> <span id="availFrom"></span> — <span id="availTo"></span></p>
   </div>
 
-  <div style="position: fixed; bottom: 0; left: 0; right: 0; background: #fff; padding: 16px 20px; box-shadow: 0 -5px 25px rgba(0,0,0,0.08); display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-color); z-index: 1000;">
+  <div class="card" style="margin-bottom:16px;">
+    <h3>📍 الموقع الجغرافي</h3>
+    <div id="map"></div>
+  </div>
+
+  <div class="card" style="margin-bottom:16px;">
+    <h3>💡 تفاصيل فواتير الاستهلاك</h3>
+    <p id="utilitiesText"></p>
+    <p style="color:var(--muted);font-size:.85rem;">* الكهرباء والغاز والمياه والصرف الصحي تُقسّم على الطلاب بالتساوي ما لم يُذكر خلاف ذلك.</p>
+  </div>
+
+  <div class="card" style="margin-bottom:16px;">
+    <h3>🧰 المرافق والتجهيزات</h3>
+    <div class="amenity-list" id="amenityList"></div>
+  </div>
+
+  <div class="card" style="margin-bottom:16px;">
+    <h3>🛏️ توزيع الغرف والأسرة المتاحة</h3>
+    <p style="color:var(--muted);font-size:.85rem;margin-top:-6px;">اضغط على السرير الأخضر لتحديده والتقدم بطلب الحجز</p>
+    <div id="roomsContainer"></div>
+  </div>
+
+  <div class="sticky-book-bar">
     <div>
-      <span style="font-size: 11px; color: var(--text-muted);">السعر الشهري</span>
-      <div id="propPrice" style="font-size: 18px; font-weight: 800; color: var(--accent-gold);">--</div>
+      <strong id="priceTag" style="font-size:1.2rem;color:var(--primary);"></strong>
+      <span style="font-size:.78rem;color:var(--muted);"> / شهرياً</span>
+      <p style="margin:2px 0 0;font-size:.78rem;" id="selectedBedText">لم يتم اختيار سرير بعد</p>
     </div>
-    <button class="btn-submit-luxury" style="width: auto; padding: 0 28px;" onclick="window.confirmBooking()">تأكيد الحجز</button>
+    <button class="btn" id="bookBtn">📖 طلب حجز</button>
   </div>
+</div>
 
-  <!-- النافذة المنبثقة للتسجيل -->
-  <div class="modal-overlay" id="authModal">
-    <div class="auth-modal-content">
-      <div class="modal-drag-indicator" onclick="window.closeAuthModal()"></div>
-      <div class="auth-header"><h3>تسجيل الدخول</h3></div>
-      <button class="btn-social" type="button" onclick="window.handleGoogleLogin()">
-        <i class="fa-brands fa-google" style="color: #ea4335;"></i>
-        <span>المتابعة بواسطة Google</span>
-      </button>
-      <div class="auth-divider"><span>أو عبر البريد</span></div>
-      <form onsubmit="window.handleEmailAuth(event)">
-        <input type="email" id="authEmail" class="input-field" placeholder="البريد الإلكتروني" required />
-        <input type="password" id="authPassword" class="input-field" placeholder="كلمة المرور" required />
-        <button type="submit" class="btn-submit-luxury">دخول</button>
-      </form>
-    </div>
+<div class="modal-overlay" id="bookModal">
+  <div class="modal-box">
+    <button class="icon-btn close-modal" id="closeBookModal">✕</button>
+    <h3>تأكيد طلب الحجز</h3>
+    <p id="bookSummary"></p>
+    <button class="btn block" id="confirmBookBtn">تأكيد الطلب</button>
   </div>
+</div>
 
-  <script type="module" src="app.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script type="module">
+  import { mountShell, getProperty, getQueryParam, toggleFavorite, isFavorite, createBooking, currentUser } from "./app.js";
+
+  mountShell("details");
+
+  const id = getQueryParam("id") || "p1";
+  let property = null;
+  let selectedRoom = null, selectedBed = null;
+
+  async function load() {
+    property = await getProperty(id);
+    if (!property) { document.getElementById("detailsContainer").innerHTML = "<p>السكن غير موجود.</p>"; return; }
+
+    document.getElementById("mainImg").src = property.images[0];
+    document.getElementById("thumbs").innerHTML = property.images.map((img, i) =>
+      `<img src="${img}" class="${i===0?'active':''}" data-idx="${i}">`
+    ).join("");
+    document.querySelectorAll("#thumbs img").forEach(t => t.onclick = () => {
+      document.getElementById("mainImg").src = property.images[t.dataset.idx];
+      document.querySelectorAll("#thumbs img").forEach(x=>x.classList.remove("active"));
+      t.classList.add("active");
+    });
+
+    document.getElementById("badgeRow").innerHTML = `
+      <span class="pill">${property.verified ? '✔ موثق' : 'غير موثق'}</span>
+      <span class="pill">${property.type}</span>
+      <span class="pill">تأمين مسترد: ${property.deposit} د.أ</span>
+      <span class="pill">💳 دفع شهري</span>`;
+
+    document.getElementById("propTitle").textContent = property.title;
+    document.getElementById("propLoc").textContent = `📍 ${property.area}, ${property.city}`;
+    document.getElementById("propDesc").textContent = property.description;
+    document.getElementById("availFrom").textContent = property.availableFrom;
+    document.getElementById("availTo").textContent = property.availableTo;
+    document.getElementById("utilitiesText").textContent = property.utilities;
+    document.getElementById("priceTag").textContent = `${property.price} د.أ`;
+
+    document.getElementById("amenityList").innerHTML = property.amenities.map(a => `<div class="amenity-item">✅ ${a}</div>`).join("");
+
+    renderRooms();
+    initMap();
+
+    document.title = `${property.title} | SAKANI-X`;
+  }
+
+  function renderRooms() {
+    const container = document.getElementById("roomsContainer");
+    container.innerHTML = Object.entries(property.rooms).map(([roomId, room]) => `
+      <div class="room-block">
+        <h4>${room.name}</h4>
+        <div class="beds-row">
+          ${Object.entries(room.beds).map(([bedId, bed]) => `
+            <div class="bed-pin ${bed.available ? 'available' : 'taken'}" data-room="${roomId}" data-bed="${bedId}">
+              🛏️<span>${bed.available ? 'متاح' : 'محجوز'}</span>
+            </div>`).join("")}
+        </div>
+      </div>
+    `).join("");
+
+    container.querySelectorAll(".bed-pin.available").forEach(pin => {
+      pin.addEventListener("click", () => {
+        container.querySelectorAll(".bed-pin").forEach(p => p.classList.remove("selected"));
+        pin.classList.add("selected");
+        selectedRoom = pin.dataset.room;
+        selectedBed = pin.dataset.bed;
+        document.getElementById("selectedBedText").textContent =
+          `تم اختيار: ${property.rooms[selectedRoom].name} - سرير ${selectedBed.replace('b','')}`;
+      });
+    });
+  }
+
+  function initMap() {
+    const map = L.map('map').setView([property.lat, property.lng], 15);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+    L.marker([property.lat, property.lng]).addTo(map).bindPopup(property.title);
+  }
+
+  document.getElementById("bookBtn").addEventListener("click", () => {
+    if (!selectedRoom) { alert("الرجاء اختيار سرير أولاً"); return; }
+    document.getElementById("bookSummary").textContent =
+      `سيتم إرسال طلب حجز لسكن "${property.title}" — ${property.rooms[selectedRoom].name}, سرير ${selectedBed.replace('b','')}, بسعر ${property.price} د.أ شهرياً.`;
+    document.getElementById("bookModal").classList.add("show");
+  });
+  document.getElementById("closeBookModal").onclick = () => document.getElementById("bookModal").classList.remove("show");
+
+  document.getElementById("confirmBookBtn").addEventListener("click", async () => {
+    const booking = await createBooking(id, {
+      propTitle: property.title, room: selectedRoom, bed: selectedBed, price: property.price
+    });
+    if (booking) {
+      alert("✅ تم إرسال طلب الحجز بنجاح، بانتظار مراجعة الإدارة.");
+      document.getElementById("bookModal").classList.remove("show");
+      window.location.href = "bookings.html";
+    }
+  });
+
+  load();
+</script>
 </body>
 </html>
