@@ -200,8 +200,19 @@ function showToast(message, type = "info") {
     }, 3500);
 }
 
+function requireAuth(callback) {
+    if (auth.currentUser) {
+        callback(auth.currentUser);
+    } else {
+        authCallbacks.push((user) => {
+            if (user) callback(user);
+        });
+    }
+}
+
 export { 
     currentUser, userProfile, loginWithGoogle, loginWithFacebook, 
-    handleEmailAuth, logoutUser, isProfileComplete, showToast,
-    translateAuthError, onAuthStateChanged, auth
+    handleEmailAuth, logoutUser, isProfileComplete, showToast, 
+    translateAuthError, onAuthStateChanged, auth,
+    requireAuth
 };
