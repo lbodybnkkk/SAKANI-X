@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>الملف الشخصي | SAKANI-X</title>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <header class="app-header">
+    <a href="index.html" class="nav-item" style="width:auto; color: var(--primary);">
+      <i class="fa-solid fa-arrow-right" style="font-size: 20px;"></i>
+    </a>
+    <span style="font-weight: 700; font-size: 16px;">الملف الشخصي</span>
+    <button class="fav-btn" onclick="handleLogout()" title="خروج" style="color: var(--danger);">
+      <i class="fa-solid fa-right-from-bracket"></i>
+    </button>
+  </header>
+
+  <main style="padding: 20px; max-width: 600px; margin: 0 auto;">
+    
+    <!-- Avatar + Name -->
+    <div class="profile-hero">
+      <div class="profile-avatar" id="profileAvatar">
+        <i class="fa-solid fa-user"></i>
+      </div>
+      <h2 id="profileName" style="font-size: 20px; font-weight: 800; margin-top: 14px;">—</h2>
+      <p id="profileEmail" style="font-size: 14px; color: var(--text-muted); margin-top: 4px;">—</p>
+      <span class="badge-tag" id="profileBadge" style="margin-top: 10px; background: rgba(245, 158, 11, 0.15); color: #f59e0b;">
+        <i class="fa-solid fa-circle-exclamation"></i> استكمل بياناتك
+      </span>
+    </div>
+
+    <!-- Form -->
+    <div class="card-form">
+      <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 16px;">
+        <i class="fa-solid fa-id-card" style="color: var(--accent-gold);"></i>
+        البيانات الأساسية
+      </h3>
+
+      <label class="form-label">الاسم الكامل *</label>
+      <input type="text" id="pfName" class="input-field" placeholder="مثال: أحمد محمد علي">
+
+      <label class="form-label">رقم الهاتف *</label>
+      <input type="tel" id="pfPhone" class="input-field" placeholder="010XXXXXXXX" maxlength="11" inputmode="numeric">
+
+      <label class="form-label">المحافظة *</label>
+      <select id="pfGovernorate" class="input-field">
+        <option value="">اختر المحافظة...</option>
+        <option>القاهرة</option><option>الجيزة</option><option>الإسكندرية</option>
+        <option>الدقهلية</option><option>الشرقية</option><option>القليوبية</option>
+        <option>المنوفية</option><option>الغربية</option><option>كفر الشيخ</option>
+        <option>دمياط</option><option>بورسعيد</option><option>الإسماعيلية</option>
+        <option>السويس</option><option>شمال سيناء</option><option>جنوب سيناء</option>
+        <option>الفيوم</option><option>بني سويف</option><option>المنيا</option>
+        <option>أسيوط</option><option>سوهاج</option><option>قنا</option>
+        <option>الأقصر</option><option>أسوان</option><option>البحر الأحمر</option>
+        <option>الوادي الجديد</option><option>مطروح</option>
+      </select>
+
+      <label class="form-label">المدينة / المركز (اختياري)</label>
+      <input type="text" id="pfCity" class="input-field" placeholder="مثال: المنيا الجديدة">
+
+      <label class="form-label">الجامعة / الكلية (اختياري)</label>
+      <input type="text" id="pfUniversity" class="input-field" placeholder="مثال: جامعة المنيا - هندسة">
+
+      <button class="btn-submit-luxury" id="saveProfileBtn" onclick="saveProfile()" style="margin-top: 20px;">
+        <i class="fa-solid fa-floppy-disk"></i> حفظ البيانات
+      </button>
+    </div>
+
+    <!-- Info -->
+    <div style="background: rgba(197, 155, 39, 0.08); border: 1px solid rgba(197, 155, 39, 0.2); border-radius: var(--radius-md); padding: 14px; margin-top: 20px;">
+      <p style="font-size: 13px; color: var(--text-muted); line-height: 1.7;">
+        <i class="fa-solid fa-shield-halved" style="color: var(--accent-gold);"></i>
+        <strong>بياناتك محمية</strong> ولن تُستخدم إلا لمراجعة طلب الحجز والتواصل معك من قبل مالك السكن.
+      </p>
+    </div>
+
+  </main>
+
+  <nav class="bottom-nav">
+    <a href="index.html" class="nav-item"><i class="fa-solid fa-house"></i><span>الرئيسية</span></a>
+    <a href="#" class="nav-item" onclick="goToFavorites(); return false;"><i class="fa-solid fa-heart"></i><span>المفضلة</span></a>
+    <a href="bookings.html" class="nav-item"><i class="fa-solid fa-calendar-check"></i><span>حجوزاتي</span></a>
+    <a href="profile.html" class="nav-item active"><i class="fa-solid fa-user"></i><span>حسابي</span></a>
+  </nav>
+
+  <script type="module" src="profile.js"></script>
+</body>
+</html>
