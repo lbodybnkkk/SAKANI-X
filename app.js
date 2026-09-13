@@ -5,18 +5,19 @@
 import { auth } from "./firebase-config.js";
 import { 
     loginWithGoogle, loginWithFacebook, handleEmailAuth, 
-    logoutUser, requireAuth, showToast 
+    logoutUser, showToast, resetPassword
 } from "./auth.js";
 import { 
-    listenToHousings, createBooking, listenToUserBookings,
+    listenToHousings, listenToSections,
     toggleFavorite, listenToFavorites 
 } from "./data-service.js";
 
 let allHousings = [];
+let allSections = [];
 let currentUser = null;
 let userFavorites = [];
 let selectedBedId = null;
-let isSignUpMode = false; // ✅ متغير وضع التسجيل/الدخول
+let isSignUpMode = false;
 
 // ========== مراقبة حالة المستخدم ==========
 auth.onAuthStateChanged((user) => {
@@ -26,6 +27,8 @@ auth.onAuthStateChanged((user) => {
             userFavorites = favs;
             renderListings(allHousings);
         });
+        // عرض نافذة آخر حجز
+        checkLatestBooking(user.uid);
     } else {
         userFavorites = [];
     }
@@ -51,14 +54,123 @@ document.addEventListener("DOMContentLoaded", () => {
                 phone: h.phone,
                 deposit: h.deposit,
                 type: h.type,
-                beds: h.beds || []
+                beds: h.beds || [],
+                section: h.section || "",
+                createdAt: h.createdAt || 0
             }));
             renderListings(allHousings);
+            renderSections();
         });
     }
 });
 
-// ========== عرض السكنات ==========
+// ========== تحميل الأقسام ==========
+listenToSections((sections) => {
+    allSections = sections;
+    renderSections();
+});
+
+// ========== عرض الأقسام ==========
+function renderSections() {
+    const container = document.getElementById("sectionsContainer");
+    if (!container) return;
+    
+    if (allSections.length === 0) {
+        container.innerHTML = "";
+        return;
+    }
+    
+    container.innerHTML = allSections.map(section => {
+        const sectionHousings = allHousings.filter(h => h.section === section.id);
+        if (sectionHousings.length === 0) return "";
+        
+        return `
+        <div class="section-block" data-section-id="${section.id}">
+            <div class="section-header">
+                <h3 class="section-title">
+                    <i class="fa-solid fa-building"></i>
+                    ${section.name}
+                </h3>
+                <button class="section-more" onclick="showSectionHousings('${section.id}')">
+                    عرض المزيد <i class="fa-solid fa-chevron-left"></i>
+                </button>
+            </div>
+            <div class="section-scroll" id="section-${section.id}">
+                ${sectionHousings.slice(0, 6).map(item => renderCard(item)).join('')}
+            </div>
+        </div>`;
+    }).join('');
+}
+
+// ========== عرض المزيد من قسم ==========
+function showSectionHousings(sectionId) {
+    const section = allSections.find(s => s.id === sectionId);
+    if (!section) return;
+    const sectionHousings = allHousings.filter(h => h.section === sectionId);
+    
+    const modal = document.createElement("div");
+    modal.className = "modal-overlay active";
+    modal.id = "sectionModal";
+    modal.innerHTML = `
+        <div class="auth-modal-content" style="max-width: 90%; max-height: 85vh; overflow-y: auto;">
+            <div class="modal-drag-indicator"></div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <h3 style="font-size:18px; font-weight:800; color:var(--primary);">
+                    <i class="fa-solid fa-building" style="color:var(--accent-gold);"></i>
+                    ${section.name}
+                </h3>
+                <button onclick="document.getElementById('sectionModal').remove()" 
+                        style="background:transparent; border:none; font-size:22px; cursor:pointer; color:var(--text-muted);">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:16px;">
+                ${sectionHousings.map(item => renderCard(item)).join('')}
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+// ========== عرض بطاقة سكن ==========
+function renderCard(item) {
+    const isFav = userFavorites.includes(item.id);
+    const genderClass = item.gender === 'girls' ? 'gender-girls' : item.gender === 'boys' ? 'gender-boys' : '';
+    const genderLabel = item.gender === 'girls' ? 'سكن طالبات' : item.gender === 'boys' ? 'سكن طلاب' : 'عائلات / موظفين';
+    const genderIcon = item.gender === 'girls' ? 'fa-person-dress' : 'fa-person';
+    
+    return `
+    <a href="details.html?id=${item.id}" class="housing-card" data-id="${item.id}">
+        <div class="card-media">
+            <img src="${item.image}" alt="${item.title}" onerror="this.src='https://via.placeholder.com/600x400?text=SAKANI-X'">
+            <div class="card-badges">
+                <span class="badge-tag ${genderClass}">
+                    <i class="fa-solid ${genderIcon}"></i>
+                    ${genderLabel}
+                </span>
+                <button class="fav-btn ${isFav ? 'active' : ''}" 
+                        onclick="event.preventDefault(); event.stopPropagation(); handleFavToggle('${item.id}', this);">
+                    <i class="fa-${isFav ? 'solid' : 'regular'} fa-heart"></i>
+                </button>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="card-price">${item.price?.toLocaleString()} ج.م <span>/ شهرياً</span></div>
+            <h3 class="card-title">${item.title}</h3>
+            <div class="card-location">
+                <i class="fa-solid fa-location-dot" style="color: var(--accent-gold);"></i>
+                <span>${item.location}</span>
+            </div>
+            <div class="card-features">
+                ${(item.amenities || []).slice(0, 3).map(a => 
+                    `<span><i class="fa-solid fa-check-circle"></i> ${a}</span>`
+                ).join('')}
+            </div>
+        </div>
+    </a>`;
+}
+
+// ========== عرض السكنات (الرئيسية) ==========
 function renderListings(items) {
     const container = document.getElementById("listingsContainer");
     if (!container) return;
@@ -73,42 +185,7 @@ function renderListings(items) {
         return;
     }
 
-    container.innerHTML = items.map(item => {
-        const isFav = userFavorites.includes(item.id);
-        const genderClass = item.gender === 'girls' ? 'gender-girls' : item.gender === 'boys' ? 'gender-boys' : '';
-        const genderLabel = item.gender === 'girls' ? 'سكن طالبات' : item.gender === 'boys' ? 'سكن طلاب' : 'عائلات / موظفين';
-        const genderIcon = item.gender === 'girls' ? 'fa-person-dress' : 'fa-person';
-        
-        return `
-        <a href="details.html?id=${item.id}" class="housing-card">
-            <div class="card-media">
-                <img src="${item.image}" alt="${item.title}" onerror="this.src='https://via.placeholder.com/600x400?text=SAKANI-X'">
-                <div class="card-badges">
-                    <span class="badge-tag ${genderClass}">
-                        <i class="fa-solid ${genderIcon}"></i>
-                        ${genderLabel}
-                    </span>
-                    <button class="fav-btn ${isFav ? 'active' : ''}" 
-                            onclick="event.preventDefault(); event.stopPropagation(); handleFavToggle('${item.id}', this);">
-                        <i class="fa-${isFav ? 'solid' : 'regular'} fa-heart"></i>
-                    </button>
-                </div>
-            </div>
-            <div class="card-body">
-                <div class="card-price">${item.price?.toLocaleString()} ج.م <span>/ شهرياً</span></div>
-                <h3 class="card-title">${item.title}</h3>
-                <div class="card-location">
-                    <i class="fa-solid fa-location-dot" style="color: var(--accent-gold);"></i>
-                    <span>${item.location}</span>
-                </div>
-                <div class="card-features">
-                    ${(item.amenities || []).slice(0, 3).map(a => 
-                        `<span><i class="fa-solid fa-check-circle"></i> ${a}</span>`
-                    ).join('')}
-                </div>
-            </div>
-        </a>`;
-    }).join('');
+    container.innerHTML = items.map(item => renderCard(item)).join('');
 }
 
 // ========== المفضلة ==========
@@ -148,14 +225,124 @@ function setFilter(type, btnElement) {
     }
 }
 
+// ========== نافذة آخر حجز ==========
+function checkLatestBooking(userId) {
+    const bookingsRef = ref(db, "bookings");
+    onValue(bookingsRef, (snapshot) => {
+        const data = snapshot.val();
+        if (!data) return;
+        
+        const userBookings = Object.entries(data)
+            .filter(([_, v]) => v.userId === userId)
+            .map(([id, val]) => ({ id, ...val }))
+            .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+        
+        const latest = userBookings[0];
+        if (!latest) return;
+        
+        // التحقق إذا تم إخفاؤه مؤقتاً
+        const dismissed = localStorage.getItem(`dismissed_booking_${latest.id}`);
+        if (dismissed === "true") return;
+        
+        // عرض النافذة إذا كان الحجز معلقاً أو مقبولاً
+        if (latest.status === "pending" || latest.status === "approved") {
+            showBookingNotification(latest);
+        }
+    });
+}
+
+function showBookingNotification(booking) {
+    // إزالة أي نافذة سابقة
+    document.getElementById("bookingNotification")?.remove();
+    
+    const isPending = booking.status === "pending";
+    const statusInfo = isPending 
+        ? { icon: "fa-hourglass-half", color: "#f59e0b", bg: "rgba(245,158,11,0.12)", text: "قيد المراجعة" }
+        : { icon: "fa-circle-check", color: "#10b981", bg: "rgba(16,185,129,0.12)", text: "مؤكد" };
+    
+    const modal = document.createElement("div");
+    modal.className = "modal-overlay active";
+    modal.id = "bookingNotification";
+    modal.innerHTML = `
+        <div class="auth-modal-content">
+            <div class="modal-drag-indicator"></div>
+            
+            <div style="text-align:center; margin-bottom:20px;">
+                <div style="width:64px; height:64px; border-radius:50%; background:${statusInfo.bg}; display:flex; align-items:center; justify-content:center; margin:0 auto 12px;">
+                    <i class="fa-solid ${statusInfo.icon}" style="font-size:28px; color:${statusInfo.color};"></i>
+                </div>
+                <h3 style="font-size:18px; font-weight:800; color:var(--primary);">
+                    ${isPending ? 'لديك حجز قيد المراجعة' : '🎉 تم قبول حجزك!'}
+                </h3>
+                <p style="font-size:14px; color:var(--text-muted); margin-top:6px;">
+                    ${isPending 
+                        ? 'سيتم مراجعة طلبك قريباً، يمكنك متابعة الحالة من صفحة حجوزاتي' 
+                        : 'يمكنك الآن التواصل مع المالك لاستكمال الإجراءات'}
+                </p>
+            </div>
+            
+            <div style="background:#f8fafc; border-radius:14px; padding:16px; margin-bottom:16px;">
+                <div style="display:flex; justify-content:space-between; font-size:14px; margin-bottom:10px;">
+                    <span style="color:var(--text-muted);">الوحدة:</span>
+                    <strong>${booking.housingTitle || '—'}</strong>
+                </div>
+                <div style="display:flex; justify-content:space-between; font-size:14px; margin-bottom:10px;">
+                    <span style="color:var(--text-muted);">السرير:</span>
+                    <strong>${booking.bedLabel || '—'}</strong>
+                </div>
+                <div style="display:flex; justify-content:space-between; font-size:14px; margin-bottom:10px;">
+                    <span style="color:var(--text-muted);">من:</span>
+                    <strong>${booking.checkInDate || '—'}</strong>
+                </div>
+                <div style="display:flex; justify-content:space-between; font-size:14px;">
+                    <span style="color:var(--text-muted);">إلى:</span>
+                    <strong>${booking.checkOutDate || '—'}</strong>
+                </div>
+            </div>
+            
+            <div style="display:flex; gap:10px;">
+                <button class="btn-submit-luxury" style="flex:1; background:${statusInfo.color};" 
+                        onclick="goToBookings()">
+                    <i class="fa-solid fa-calendar-check"></i> عرض حجوزاتي
+                </button>
+            </div>
+            
+            <div style="display:flex; gap:10px; margin-top:10px;">
+                <button onclick="dismissBookingNotification('${booking.id}')" 
+                        style="flex:1; padding:12px; background:transparent; border:1px solid var(--border-color); border-radius:14px; font-family:inherit; font-weight:600; color:var(--text-muted); cursor:pointer;">
+                    <i class="fa-solid fa-bell-slash"></i> ذكرني لاحقاً
+                </button>
+                ${!isPending ? `
+                <button onclick="dismissForever('${booking.id}')" 
+                        style="flex:1; padding:12px; background:transparent; border:1px solid var(--border-color); border-radius:14px; font-family:inherit; font-weight:600; color:var(--text-muted); cursor:pointer;">
+                    <i class="fa-solid fa-ban"></i> عدم الإظهار
+                </button>` : ''}
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+function dismissBookingNotification(bookingId) {
+    localStorage.setItem(`dismissed_booking_${bookingId}`, "true");
+    document.getElementById("bookingNotification")?.remove();
+}
+
+function dismissForever(bookingId) {
+    localStorage.setItem(`dismissed_booking_${bookingId}`, "true");
+    document.getElementById("bookingNotification")?.remove();
+}
+
+function goToBookings() {
+    document.getElementById("bookingNotification")?.remove();
+    window.location.href = "bookings.html";
+}
+
 // ========== الدايلوج ==========
 function toggleAuthModal(show) {
     const modal = document.getElementById("authModal");
     if (modal) modal.classList.toggle("active", show);
-    if (show) {
-        // إعادة تعيين للوضع الافتراضي (دخول)
-        switchAuthTab('login');
-    }
+    if (show) switchAuthTab('login');
 }
 function closeAuthModal() { toggleAuthModal(false); }
 
@@ -168,8 +355,7 @@ function closeSupportModal() {
     if (modal) modal.classList.remove("active");
 }
 
-// ✅✅✅ هنا بالظبط مكان switchAuthTab ✅✅✅
-// ========== تبديل تابات الدخول / التسجيل ==========
+// ========== تبديل تابات الدخول ==========
 function switchAuthTab(mode) {
     isSignUpMode = mode === 'signup';
 
@@ -179,11 +365,11 @@ function switchAuthTab(mode) {
     const authSubtitle = document.getElementById("authSubtitle");
     const nameField = document.getElementById("authName");
     const submitBtn = document.getElementById("authSubmitBtn");
+    const forgotBtn = document.getElementById("forgotPasswordBtn");
 
     if (!loginTab || !signupTab) return;
 
     if (isSignUpMode) {
-        // تفعيل تاب التسجيل
         loginTab.style.background = "transparent";
         loginTab.style.color = "var(--text-muted)";
         loginTab.style.boxShadow = "none";
@@ -194,12 +380,12 @@ function switchAuthTab(mode) {
         if (authTitle) authTitle.innerText = "إنشاء حساب جديد";
         if (authSubtitle) authSubtitle.innerText = "انضم لمنصة SAKANI-X واحجز سكنك";
         if (nameField) nameField.style.display = "block";
+        if (forgotBtn) forgotBtn.style.display = "none";
         if (submitBtn) {
             submitBtn.innerText = "إنشاء حساب";
             submitBtn.onclick = () => handleEmailAuth(true);
         }
     } else {
-        // تفعيل تاب الدخول
         signupTab.style.background = "transparent";
         signupTab.style.color = "var(--text-muted)";
         signupTab.style.boxShadow = "none";
@@ -210,155 +396,31 @@ function switchAuthTab(mode) {
         if (authTitle) authTitle.innerText = "مرحباً بعودتك 👋";
         if (authSubtitle) authSubtitle.innerText = "سجّل دخولك لمتابعة حجوزاتك";
         if (nameField) nameField.style.display = "none";
+        if (forgotBtn) forgotBtn.style.display = "block";
         if (submitBtn) {
             submitBtn.innerText = "دخول";
             submitBtn.onclick = () => handleEmailAuth(false);
         }
     }
 }
-// ✅✅✅ نهاية switchAuthTab ✅✅✅
 
-// ========== تفاصيل العقار ==========
-function loadPropertyDetails() {
-    const params = new URLSearchParams(window.location.search);
-    const propId = params.get('id');
-    if (!propId) { window.location.href = "index.html"; return; }
-
-    listenToHousings((housings) => {
-        const item = housings.find(p => p.id === propId);
-        if (!item) {
-            document.getElementById("propTitle").innerText = "الوحدة غير موجودة";
-            return;
-        }
-
-        document.getElementById("propTitle").innerText = item.title || "";
-        document.getElementById("propLocation").innerText = item.address || item.city || "";
-        document.getElementById("propPrice").innerText = `${item.price?.toLocaleString() || 0} ج.م`;
-        document.getElementById("propImage").src = item.images?.[0] || "https://via.placeholder.com/600x400?text=SAKANI-X";
-        
-        const genderBadge = document.getElementById("propGenderBadge");
-        if (genderBadge) {
-            const isGirls = item.gender?.includes("طالبات");
-            genderBadge.innerText = isGirls ? 'سكن طالبات' : 'سكن طلاب';
-            genderBadge.className = `badge-tag ${isGirls ? 'gender-girls' : 'gender-boys'}`;
-        }
-
-        // الخريطة
-        if (typeof L !== 'undefined' && item.lat && item.lng) {
-            const map = L.map('propertyMap').setView([item.lat, item.lng], 14);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-            L.marker([item.lat, item.lng]).addTo(map).bindPopup(item.title).openPopup();
-        }
-
-        // الأسرة
-        const bedsGrid = document.getElementById("bedsGrid");
-        if (bedsGrid) {
-            const beds = item.beds && item.beds.length > 0 ? item.beds : [
-                { id: "b1", room: "غرفة 1", status: "available" },
-                { id: "b2", room: "غرفة 1", status: "available" },
-                { id: "b3", room: "غرفة 2", status: "available" }
-            ];
-            bedsGrid.innerHTML = beds.map(bed => `
-                <div class="bed-card ${bed.status}" onclick="selectBed('${bed.id}', this, '${bed.status}')">
-                    <i class="fa-solid fa-bed"></i>
-                    <div style="font-weight: 700; font-size: 13px;">${bed.room}</div>
-                    <div style="font-size: 11px; margin-top: 2px;">${bed.status === 'available' ? 'متاح للكرية' : 'محجوز'}</div>
-                </div>
-            `).join('');
-        }
-    });
-}
-
-function selectBed(bedId, element, status) {
-    if (status === 'occupied') return;
-    document.querySelectorAll('.bed-card').forEach(b => b.classList.remove('selected'));
-    element.classList.add('selected');
-    selectedBedId = bedId;
-}
-
-// ========== الحجز ==========
-function confirmBooking() {
-    if (!selectedBedId) {
-        showToast("برجاء اختيار السرير المطلوب أولاً", "error");
-        return;
-    }
-    if (!currentUser) {
-        toggleAuthModal(true);
-        showToast("سجّل دخولك أولاً لإتمام الحجز", "info");
-        return;
-    }
-    showBookingModal();
-}
-
-function showBookingModal() {
-    const params = new URLSearchParams(window.location.search);
-    const propId = params.get('id');
-    const item = allHousings.find(p => p.id === propId);
-    
-    const modal = document.createElement("div");
-    modal.className = "modal-overlay active";
-    modal.id = "bookingConfirmModal";
-    modal.innerHTML = `
-        <div class="auth-modal-content">
-            <div class="modal-drag-indicator"></div>
-            <h3 style="text-align:center; margin-bottom:20px;">تأكيد الحجز</h3>
-            <p style="text-align:center; color:var(--text-muted); margin-bottom:16px;">
-                ${item?.title || ""}<br>
-                <strong style="color:var(--accent-gold);">${item?.price?.toLocaleString() || 0} ج.م / شهرياً</strong>
-            </p>
-            <label style="font-size:13px; font-weight:600; display:block; margin-bottom:6px;">تاريخ الانتقال</label>
-            <input type="date" id="moveInDate" class="input-field" required>
-            <label style="font-size:13px; font-weight:600; display:block; margin-bottom:6px;">ملاحظات (اختياري)</label>
-            <textarea id="bookingNotes" class="input-field" rows="2" placeholder="أي تفاصيل إضافية..."></textarea>
-            <button class="btn-submit-luxury" onclick="submitBooking()" style="margin-top:12px;">تأكيد الحجز</button>
-            <button onclick="document.getElementById('bookingConfirmModal').remove()" 
-                    style="width:100%; margin-top:8px; padding:12px; background:transparent; border:1px solid var(--border-color); border-radius:14px; cursor:pointer; font-family:inherit;">
-                إلغاء
-            </button>
-        </div>
-    `;
-    document.body.appendChild(modal);
-    document.getElementById("moveInDate").min = new Date().toISOString().split('T')[0];
-}
-
-async function submitBooking() {
-    const moveInDate = document.getElementById("moveInDate").value;
-    const notes = document.getElementById("bookingNotes").value;
-    if (!moveInDate) { showToast("اختر تاريخ الانتقال", "error"); return; }
-
-    const params = new URLSearchParams(window.location.search);
-    const propId = params.get('id');
-    const item = allHousings.find(p => p.id === propId);
-
-    try {
-        await createBooking(
-            currentUser, propId, item.title, selectedBedId, 
-            selectedBedId, moveInDate, notes
-        );
-        document.getElementById("bookingConfirmModal")?.remove();
-        showToast("تم إرسال طلب الحجز بنجاح! سيتم مراجعته قريباً ✅", "success");
-        selectedBedId = null;
-        document.querySelectorAll('.bed-card').forEach(b => b.classList.remove('selected'));
-    } catch (error) {
-        console.error("Booking error:", error);
-        showToast("فشل إرسال الحجز: " + error.message, "error");
-    }
-}
-
-// ========== تصدير الدوال للنطاق العام ==========
+// ========== تصدير الدوال ==========
 window.loginWithGoogle = loginWithGoogle;
 window.loginWithFacebook = loginWithFacebook;
 window.handleEmailAuth = handleEmailAuth;
 window.logoutUser = logoutUser;
+window.resetPassword = resetPassword;
 window.toggleAuthModal = toggleAuthModal;
 window.closeAuthModal = closeAuthModal;
 window.openSupportModal = openSupportModal;
 window.closeSupportModal = closeSupportModal;
-window.switchAuthTab = switchAuthTab; // ✅ مهم للتابات
+window.switchAuthTab = switchAuthTab;
 window.filterListings = filterListings;
 window.setFilter = setFilter;
-window.selectBed = selectBed;
-window.confirmBooking = confirmBooking;
-window.submitBooking = submitBooking;
 window.handleFavToggle = handleFavToggle;
-window.loadPropertyDetails = loadPropertyDetails;
+window.showSectionHousings = showSectionHousings;
+window.dismissBookingNotification = dismissBookingNotification;
+window.dismissForever = dismissForever;
+window.goToBookings = goToBookings;
+window.allHousings = allHousings;
+window.userFavorites = userFavorites;
