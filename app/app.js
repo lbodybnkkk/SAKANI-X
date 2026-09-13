@@ -16,6 +16,7 @@ let allHousings = [];
 let currentUser = null;
 let userFavorites = [];
 let selectedBedId = null;
+let isSignUpMode = false; // ✅ متغير وضع التسجيل/الدخول
 
 // ========== مراقبة حالة المستخدم ==========
 auth.onAuthStateChanged((user) => {
@@ -49,7 +50,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 description: h.description || "",
                 phone: h.phone,
                 deposit: h.deposit,
-                type: h.type
+                type: h.type,
+                beds: h.beds || []
             }));
             renderListings(allHousings);
         });
@@ -150,6 +152,10 @@ function setFilter(type, btnElement) {
 function toggleAuthModal(show) {
     const modal = document.getElementById("authModal");
     if (modal) modal.classList.toggle("active", show);
+    if (show) {
+        // إعادة تعيين للوضع الافتراضي (دخول)
+        switchAuthTab('login');
+    }
 }
 function closeAuthModal() { toggleAuthModal(false); }
 
@@ -161,6 +167,56 @@ function closeSupportModal() {
     const modal = document.getElementById("supportModal");
     if (modal) modal.classList.remove("active");
 }
+
+// ✅✅✅ هنا بالظبط مكان switchAuthTab ✅✅✅
+// ========== تبديل تابات الدخول / التسجيل ==========
+function switchAuthTab(mode) {
+    isSignUpMode = mode === 'signup';
+
+    const loginTab = document.getElementById("loginTab");
+    const signupTab = document.getElementById("signupTab");
+    const authTitle = document.getElementById("authTitle");
+    const authSubtitle = document.getElementById("authSubtitle");
+    const nameField = document.getElementById("authName");
+    const submitBtn = document.getElementById("authSubmitBtn");
+
+    if (!loginTab || !signupTab) return;
+
+    if (isSignUpMode) {
+        // تفعيل تاب التسجيل
+        loginTab.style.background = "transparent";
+        loginTab.style.color = "var(--text-muted)";
+        loginTab.style.boxShadow = "none";
+        signupTab.style.background = "#fff";
+        signupTab.style.color = "var(--primary)";
+        signupTab.style.boxShadow = "var(--shadow-sm)";
+
+        if (authTitle) authTitle.innerText = "إنشاء حساب جديد";
+        if (authSubtitle) authSubtitle.innerText = "انضم لمنصة SAKANI-X واحجز سكنك";
+        if (nameField) nameField.style.display = "block";
+        if (submitBtn) {
+            submitBtn.innerText = "إنشاء حساب";
+            submitBtn.onclick = () => handleEmailAuth(true);
+        }
+    } else {
+        // تفعيل تاب الدخول
+        signupTab.style.background = "transparent";
+        signupTab.style.color = "var(--text-muted)";
+        signupTab.style.boxShadow = "none";
+        loginTab.style.background = "#fff";
+        loginTab.style.color = "var(--primary)";
+        loginTab.style.boxShadow = "var(--shadow-sm)";
+
+        if (authTitle) authTitle.innerText = "مرحباً بعودتك 👋";
+        if (authSubtitle) authSubtitle.innerText = "سجّل دخولك لمتابعة حجوزاتك";
+        if (nameField) nameField.style.display = "none";
+        if (submitBtn) {
+            submitBtn.innerText = "دخول";
+            submitBtn.onclick = () => handleEmailAuth(false);
+        }
+    }
+}
+// ✅✅✅ نهاية switchAuthTab ✅✅✅
 
 // ========== تفاصيل العقار ==========
 function loadPropertyDetails() {
@@ -197,7 +253,7 @@ function loadPropertyDetails() {
         // الأسرة
         const bedsGrid = document.getElementById("bedsGrid");
         if (bedsGrid) {
-            const beds = item.beds || [
+            const beds = item.beds && item.beds.length > 0 ? item.beds : [
                 { id: "b1", room: "غرفة 1", status: "available" },
                 { id: "b2", room: "غرفة 1", status: "available" },
                 { id: "b3", room: "غرفة 2", status: "available" }
@@ -231,8 +287,6 @@ function confirmBooking() {
         showToast("سجّل دخولك أولاً لإتمام الحجز", "info");
         return;
     }
-    
-    // فتح دايلوج تأكيد الحجز
     showBookingModal();
 }
 
@@ -291,7 +345,7 @@ async function submitBooking() {
     }
 }
 
-// تصدير الدوال للنطاق العام
+// ========== تصدير الدوال للنطاق العام ==========
 window.loginWithGoogle = loginWithGoogle;
 window.loginWithFacebook = loginWithFacebook;
 window.handleEmailAuth = handleEmailAuth;
@@ -300,6 +354,7 @@ window.toggleAuthModal = toggleAuthModal;
 window.closeAuthModal = closeAuthModal;
 window.openSupportModal = openSupportModal;
 window.closeSupportModal = closeSupportModal;
+window.switchAuthTab = switchAuthTab; // ✅ مهم للتابات
 window.filterListings = filterListings;
 window.setFilter = setFilter;
 window.selectBed = selectBed;
