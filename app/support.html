@@ -1,60 +1,68 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>الدعم والبروفايل | SAKANI-X</title>
-  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
-  <link rel="stylesheet" href="style.css" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>الدعم الفني | SAKANI-X</title>
+<link rel="stylesheet" href="style.css">
 </head>
-<body style="padding: 20px 20px 100px 20px;">
+<body>
+<div id="app-shell"></div>
 
-  <!-- أرثام الدعم المباشرة أعلى الصفحة -->
-  <div class="support-header-card">
-    <h3 style="font-size: 18px; font-weight: 800;">مركز المساعدة والدعم الفني</h3>
-    <p style="font-size: 13px; color: #94a3b8; margin-top: 4px;">تواصل معنا فوراً على مدار الساعة</p>
-    
-    <div class="support-phones">
-      <a href="tel:01000000001" class="phone-chip">
-        <i class="fa-solid fa-phone-volume" style="color: var(--accent-gold);"></i>
-        <span>01000000001</span>
-      </a>
-      <a href="tel:01100000002" class="phone-chip">
-        <i class="fa-solid fa-headset" style="color: var(--accent-gold);"></i>
-        <span>01100000002</span>
-      </a>
+<div class="container" style="padding-top:16px;">
+  <h1 style="margin-bottom:14px;">🛟 الدعم الفني والاتصال المباشر</h1>
+
+  <a class="support-tile" href="https://wa.me/962790000000" target="_blank">
+    <span class="ic">💬</span>
+    <div><strong>واتساب</strong><p style="margin:2px 0 0;color:var(--muted);font-size:.82rem;">تواصل مباشر مع فريق الدعم</p></div>
+  </a>
+  <a class="support-tile" href="tel:+962790000000">
+    <span class="ic">📞</span>
+    <div><strong>اتصال هاتفي</strong><p style="margin:2px 0 0;color:var(--muted);font-size:.82rem;">962-79-0000000+</p></div>
+  </a>
+  <a class="support-tile" href="mailto:support@sakani-x.com">
+    <span class="ic">✉️</span>
+    <div><strong>البريد الإلكتروني</strong><p style="margin:2px 0 0;color:var(--muted);font-size:.82rem;">support@sakani-x.com</p></div>
+  </a>
+
+  <div class="card" style="margin-top:20px;">
+    <h3>أرسل استفسارك</h3>
+    <div class="form-grid">
+      <div class="field"><label>الموضوع</label><input type="text" id="subj"></div>
+      <div class="field"><label>رسالتك</label><textarea id="msg"></textarea></div>
+      <button class="btn block" id="sendMsgBtn">إرسال</button>
     </div>
   </div>
 
-  <!-- ملف البروفايل التفاعلي -->
-  <div id="profileSection"></div>
-
-  <!-- القائمة السفلية -->
-  <nav class="bottom-nav">
-    <a href="index.html" class="nav-item"><i class="fa-solid fa-house"></i><span>الرئيسية</span></a>
-    <a href="bookings.html" class="nav-item"><i class="fa-solid fa-calendar-check"></i><span>حجوزاتي</span></a>
-    <a href="support.html" class="nav-item active"><i class="fa-solid fa-headset"></i><span>الدعم والبروفايل</span></a>
-  </nav>
-
-  <!-- النافذة المنبثقة للتسجيل -->
-  <div class="modal-overlay" id="authModal">
-    <div class="auth-modal-content">
-      <div class="modal-drag-indicator" onclick="window.closeAuthModal()"></div>
-      <div class="auth-header"><h3>تسجيل الدخول</h3></div>
-      <button class="btn-social" type="button" onclick="window.handleGoogleLogin()">
-        <i class="fa-brands fa-google" style="color: #ea4335;"></i>
-        <span>المتابعة بواسطة Google</span>
-      </button>
-      <div class="auth-divider"><span>أو عبر البريد</span></div>
-      <form onsubmit="window.handleEmailAuth(event)">
-        <input type="email" id="authEmail" class="input-field" placeholder="البريد الإلكتروني" required />
-        <input type="password" id="authPassword" class="input-field" placeholder="كلمة المرور" required />
-        <button type="submit" class="btn-submit-luxury">دخول</button>
-      </form>
-    </div>
+  <div class="card" style="margin-top:20px;">
+    <h3>❓ أسئلة شائعة</h3>
+    <p><strong>كيف أحجز سرير؟</strong> افتح تفاصيل السكن، اختر السرير المتاح، ثم اضغط "طلب حجز".</p>
+    <p><strong>كيف أوثّق ملفي الجامعي؟</strong> من صفحة "حسابي" → "الملف الجامعي" واملأ البيانات المطلوبة.</p>
+    <p><strong>كيف أنشر سكني الخاص؟</strong> من "لوحة التحكم" اضغط "أضف وحدة الآن".</p>
   </div>
+</div>
 
-  <script type="module" src="app.js"></script>
+<script type="module">
+  import { mountShell, currentUser } from "./app.js";
+  import { auth, db, ref, push, set } from "./firebase-config.js";
+
+  mountShell("support");
+
+  document.getElementById("sendMsgBtn").onclick = async () => {
+    const subj = document.getElementById("subj").value.trim();
+    const msg = document.getElementById("msg").value.trim();
+    if (!subj || !msg) { alert("الرجاء تعبئة الحقول"); return; }
+    const ticketRef = push(ref(db, "supportTickets"));
+    await set(ticketRef, {
+      subject: subj, message: msg,
+      userId: auth.currentUser?.uid || "زائر",
+      userEmail: auth.currentUser?.email || "غير مسجل",
+      createdAt: Date.now()
+    });
+    alert("✅ تم إرسال استفسارك، سيتم الرد عليك قريباً");
+    document.getElementById("subj").value = "";
+    document.getElementById("msg").value = "";
+  };
+</script>
 </body>
 </html>
