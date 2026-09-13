@@ -15,40 +15,36 @@
       <i class="fa-solid fa-building-shield"></i>
       <span>SAKANI<span style="color: var(--accent-gold);">X</span></span>
     </a>
-    <button class="user-profile-btn" onclick="toggleAuthModal(true)">
+    <button class="user-profile-btn" onclick="window.toggleAuthModal(true)">
       <i class="fa-solid fa-user"></i>
     </button>
   </header>
 
-  <main class="listings-grid" id="listingsContainer" style="margin-top: 20px;">
-    <!-- سكنات الفايربيس الحية ستظهر هنا -->
-  </main>
+  <main class="listings-grid" id="listingsContainer"></main>
 
-  <!-- Navigation Bar -->
+  <!-- القائمة السفلية -->
   <nav class="bottom-nav">
     <a href="index.html" class="nav-item active"><i class="fa-solid fa-house"></i><span>الرئيسية</span></a>
     <a href="bookings.html" class="nav-item"><i class="fa-solid fa-calendar-check"></i><span>حجوزاتي</span></a>
     <a href="support.html" class="nav-item"><i class="fa-solid fa-headset"></i><span>الدعم والبروفايل</span></a>
   </nav>
 
-  <!-- Login Modal without ugly browser alert -->
+  <!-- نافذة تسجيل الدخول المنبثقة -->
   <div class="modal-overlay" id="authModal">
     <div class="auth-modal-content">
-      <div class="modal-drag-indicator"></div>
+      <div class="modal-drag-indicator" onclick="window.closeAuthModal()"></div>
       <div class="auth-header">
         <h3>تسجيل الدخول إلى SAKANI-X</h3>
       </div>
 
-      <div class="social-auth-buttons">
-        <button class="btn-social google-btn" type="button" onclick="handleGoogleLogin()">
-          <i class="fa-brands fa-google" style="color: #ea4335; font-size: 20px;"></i>
-          <span>المتابعة بواسطة Google</span>
-        </button>
-      </div>
+      <button class="btn-social" type="button" onclick="window.handleGoogleLogin()">
+        <i class="fa-brands fa-google" style="color: #ea4335; font-size: 18px;"></i>
+        <span>المتابعة بواسطة Google</span>
+      </button>
 
       <div class="auth-divider"><span>أو عبر البريد الإلكتروني</span></div>
 
-      <form onsubmit="handleEmailAuth(event)">
+      <form onsubmit="window.handleEmailAuth(event)">
         <input type="email" id="authEmail" class="input-field" placeholder="البريد الإلكتروني" required />
         <input type="password" id="authPassword" class="input-field" placeholder="كلمة المرور" required />
         <button type="submit" class="btn-submit-luxury">دخول / إنشاء حساب</button>
