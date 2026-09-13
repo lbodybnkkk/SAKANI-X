@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SAKANI X | لوحة إدارة السكنات</title>
+    <title>SAKANI X | لوحة إدارة CMD</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="admin.css">
@@ -28,6 +28,9 @@
             <button class="nav-btn" data-tab="bookings">
                 <i class="fa-solid fa-calendar-check"></i> طلبات الحجز
             </button>
+            <button class="nav-btn" data-tab="sections">
+                <i class="fa-solid fa-layer-group"></i> الأقسام
+            </button>
         </nav>
     </aside>
 
@@ -51,6 +54,10 @@
                 <div class="stat-card">
                     <div class="stat-icon green"><i class="fa-solid fa-circle-check"></i></div>
                     <div class="stat-info"><h3 id="stat-approved-bookings">0</h3><p>حجوزات مقبولة</p></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon red"><i class="fa-solid fa-bed"></i></div>
+                    <div class="stat-info"><h3 id="stat-total-beds">0</h3><p>إجمالي الأسرّة</p></div>
                 </div>
             </div>
         </section>
@@ -91,6 +98,12 @@
                             </select>
                         </div>
                         <div class="form-group">
+                            <label>القسم</label>
+                            <select id="section">
+                                <option value="">بدون قسم</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
                             <label>الإيجار الشهري (EGP)</label>
                             <input type="number" id="price" placeholder="1500" required>
                         </div>
@@ -101,6 +114,18 @@
                         <div class="form-group">
                             <label>رقم هاتف التواصل</label>
                             <input type="tel" id="phone" placeholder="010XXXXXXXX" required>
+                        </div>
+                        <div class="form-group">
+                            <label>اسم مالك السكن</label>
+                            <input type="text" id="ownerName" placeholder="مثال: أحمد محمد">
+                        </div>
+                        <div class="form-group">
+                            <label>عدد الغرف</label>
+                            <input type="number" id="roomsCount" placeholder="3" min="1">
+                        </div>
+                        <div class="form-group">
+                            <label>عدد الأسرّة لكل غرفة</label>
+                            <input type="number" id="bedsPerRoom" placeholder="2" min="1">
                         </div>
                     </div>
 
@@ -148,7 +173,7 @@
                     <thead>
                         <tr>
                             <th>الصورة</th><th>العنوان</th><th>المدينة</th>
-                            <th>النوع</th><th>الإيجار</th><th>الإجراءات</th>
+                            <th>النوع</th><th>الإيجار</th><th>الأسرّة</th><th>الإجراءات</th>
                         </tr>
                     </thead>
                     <tbody id="housing-table-body"></tbody>
@@ -168,6 +193,36 @@
                         </tr>
                     </thead>
                     <tbody id="bookings-table-body"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Sections -->
+        <section id="sections" class="tab-content">
+            <div class="form-container" style="margin-bottom: 20px;">
+                <h2>إضافة قسم جديد</h2>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>اسم القسم</label>
+                        <input type="text" id="section-name" placeholder="مثال: حي النوادي">
+                    </div>
+                    <div class="form-group">
+                        <label>أيقونة (FontAwesome class)</label>
+                        <input type="text" id="section-icon" placeholder="مثال: fa-city" value="fa-building">
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button class="btn-primary" onclick="addSection()">
+                        <i class="fa-solid fa-plus"></i> إضافة القسم
+                    </button>
+                </div>
+            </div>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr><th>القسم</th><th>الأيقونة</th><th>عدد الوحدات</th><th>الإجراءات</th></tr>
+                    </thead>
+                    <tbody id="sections-table-body"></tbody>
                 </table>
             </div>
         </section>
