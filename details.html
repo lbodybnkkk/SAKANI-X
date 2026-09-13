@@ -1,6 +1,69 @@
-<script type="module">
-import "./app.js";
-document.addEventListener("DOMContentLoaded", () => {
-    window.loadPropertyDetails();
-});
-</script>
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>تفاصيل السكن | SAKANI-X</title>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body style="padding-bottom: 120px;">
+
+  <header class="app-header">
+    <a href="index.html" class="nav-item" style="width:auto; color: var(--primary);">
+      <i class="fa-solid fa-arrow-right" style="font-size: 20px;"></i>
+    </a>
+    <span style="font-weight: 700; font-size: 16px;">تفاصيل الوحدة</span>
+    <button class="fav-btn" id="detailFavBtn" onclick="toggleDetailFav()">
+      <i class="fa-regular fa-heart"></i>
+    </button>
+  </header>
+
+  <div style="padding: 16px 20px;">
+    <div style="position: relative; height: 260px; border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow-md);">
+      <img id="propImage" src="" alt="السكن" style="width: 100%; height: 100%; object-fit: cover;" />
+      <span id="propGenderBadge" class="badge-tag gender-girls" style="position: absolute; top: 14px; right: 14px;">—</span>
+    </div>
+
+    <div style="margin-top: 18px;">
+      <h2 id="propTitle" style="font-size: 20px; font-weight: 800; color: var(--primary);">جاري التحميل...</h2>
+      <p id="propLocation" style="color: var(--text-muted); font-size: 14px; margin-top: 6px; display: flex; align-items: center; gap: 6px;">
+        <i class="fa-solid fa-location-dot" style="color: var(--accent-gold);"></i> —
+      </p>
+    </div>
+
+    <div id="propAmenities" style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px;"></div>
+
+    <div style="margin-top: 16px; padding: 14px; background: #fff; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+      <p id="propDescription" style="font-size: 14px; color: var(--text-muted); line-height: 1.7;">—</p>
+    </div>
+
+    <hr style="border: none; border-top: 1px solid var(--border-color); margin: 20px 0;" />
+
+    <h4 style="font-size: 16px; font-weight: 700; margin-bottom: 10px;">الموقع الجغرافي</h4>
+    <div id="propertyMap" style="height: 200px; border-radius: var(--radius-md); overflow: hidden; box-shadow: var(--shadow-sm); background: #f1f5f9;"></div>
+
+    <hr style="border: none; border-top: 1px solid var(--border-color); margin: 20px 0;" />
+
+    <h4 style="font-size: 16px; font-weight: 700; margin-bottom: 6px;">توزيع الغرف والأسرة</h4>
+    <p style="font-size: 13px; color: var(--text-muted);">اختر السرير المناسب لك:</p>
+    <div class="beds-container" id="bedsGrid"></div>
+  </div>
+
+  <!-- Floating Bottom Bar -->
+  <div style="position: fixed; bottom: 0; left: 0; right: 0; background: #ffffff; padding: 14px 20px; box-shadow: 0 -8px 25px rgba(0,0,0,0.08); display: flex; align-items: center; justify-content: space-between; border-top-left-radius: 20px; border-top-right-radius: 20px; z-index: 1000;">
+    <div>
+      <span style="font-size: 12px; color: var(--text-muted); display: block;">الإجمالي الشهري</span>
+      <span id="propPrice" style="font-size: 20px; font-weight: 800; color: var(--accent-gold);">— ج.م</span>
+    </div>
+    <button class="btn-submit-luxury" style="width: auto; padding: 0 32px;" onclick="confirmBooking()">
+      <i class="fa-solid fa-calendar-plus"></i> احجز الآن
+    </button>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script type="module" src="details.js"></script>
+</body>
+</html>
