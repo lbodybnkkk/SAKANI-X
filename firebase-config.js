@@ -28,7 +28,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
 const firebaseConfig = {
-  apiKey: "YOUR_FIREBASE_API_KEY", // ضع مفتاح الـ API الخاص بمشروعك هنا من إعدادات Firebase
+  apiKey: "AIzaSyDW1u0V41aKuphDC4FUdDsSZX7wUlb6twk", // ضع مفتاح الـ API الخاص بمشروعك هنا من إعدادات Firebase
   authDomain: "cmd1-1c696.firebaseapp.com",
   databaseURL: "https://cmd1-1c696-default-rtdb.firebaseio.com/",
   projectId: "cmd1-1c696",
