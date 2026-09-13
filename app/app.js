@@ -1,133 +1,190 @@
-import { db, ref, onValue, push, set } from "../firebase-config.js";
+/* ==========================================
+   SAKANI-X CORE JS ENGINE & DATA PIPELINE
+   ========================================== */
 
-let allHousings = {};
+// Sample Luxury Data
+const properties = [
+  {
+    id: "prop-1",
+    title: "جناح الروضة الفاخر - أسيوط الجديدة",
+    location: "حي رجال الأعمال - بالقرب من الجامعة الوطنية",
+    price: 2200,
+    gender: "girls",
+    isLuxury: true,
+    image: "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=800&q=80",
+    lat: 27.1801,
+    lng: 31.1837,
+    beds: [
+      { id: "b1", room: "غرفة 1", status: "occupied" },
+      { id: "b2", room: "غرفة 1", status: "available" },
+      { id: "b3", room: "غرفة 2", status: "available" }
+    ]
+  },
+  {
+    id: "prop-2",
+    title: "سكن الصفوة الطلابي VIP",
+    location: "شارع الجامعات - المنيا الجديدة",
+    price: 1800,
+    gender: "boys",
+    isLuxury: true,
+    image: "https://images.unsplash.com/photo-1555854877-bab0e564b8d5?auto=format&fit=crop&w=800&q=80",
+    lat: 28.0871,
+    lng: 30.7618,
+    beds: [
+      { id: "b10", room: "غرفة 1", status: "available" },
+      { id: "b11", room: "غرفة 1", status: "available" }
+    ]
+  }
+];
 
-// Load Housings Data from Firebase
-onValue(ref(db, "housings"), (snapshot) => {
-    allHousings = snapshot.val() || {};
-    renderHousings();
+let selectedBedId = null;
+
+// Initial Render
+document.addEventListener("DOMContentLoaded", () => {
+  const container = document.getElementById("listingsContainer");
+  if (container) {
+    renderListings(properties);
+  }
 });
 
-// Filters Elements
-const filterCity = document.getElementById("filter-city");
-const filterType = document.getElementById("filter-type");
-const filterGender = document.getElementById("filter-gender");
+// Render Listings Function
+function renderListings(items) {
+  const container = document.getElementById("listingsContainer");
+  if (!container) return;
 
-filterCity.addEventListener("input", renderHousings);
-filterType.addEventListener("change", renderHousings);
-filterGender.addEventListener("change", renderHousings);
-
-function renderHousings() {
-    const grid = document.getElementById("housing-grid");
-    const countLabel = document.getElementById("results-count");
-    grid.innerHTML = "";
-
-    const cityVal = filterCity.value.trim().toLowerCase();
-    const typeVal = filterType.value;
-    const genderVal = filterGender.value;
-
-    const keys = Object.keys(allHousings);
-    let visibleCount = 0;
-
-    keys.forEach(key => {
-        const item = allHousings[key];
-
-        // Filtering logic
-        const matchesCity = !cityVal || item.city.toLowerCase().includes(cityVal) || item.address.toLowerCase().includes(cityVal);
-        const matchesType = !typeVal || item.type === typeVal;
-        const matchesGender = !genderVal || item.gender === genderVal;
-
-        if (matchesCity && matchesType && matchesGender) {
-            visibleCount++;
-
-            const card = document.createElement("div");
-            card.className = "housing-card";
-
-            card.innerHTML = `
-                <img src="${item.images[0]}" class="card-img" alt="${item.title}">
-                <div class="card-body">
-                    <span class="card-tag">${item.type} - ${item.gender}</span>
-                    <h3 class="card-title">${item.title}</h3>
-                    <p class="card-location"><i class="fa-solid fa-location-dot"></i> ${item.city}، ${item.address}</p>
-                    <div class="card-footer">
-                        <div class="card-price">${item.price} <span>ج.م / شهر</span></div>
-                        <button class="btn-details" data-id="${key}">التفاصيل والحجز</button>
-                    </div>
-                </div>
-            `;
-
-            grid.appendChild(card);
-        }
-    });
-
-    countLabel.innerText = `تم العثور على (${visibleCount}) وحدة سكنية`;
-
-    // Attach Click Handler for Details
-    document.querySelectorAll(".btn-details").forEach(btn => {
-        btn.addEventListener("click", () => openModal(btn.dataset.id));
-    });
+  container.innerHTML = items.map(item => `
+    <a href="details.html?id=${item.id}" class="housing-card">
+      <div class="card-media">
+        <img src="${item.image}" alt="${item.title}">
+        <div class="card-badges">
+          <span class="badge-tag ${item.gender === 'girls' ? 'gender-girls' : 'gender-boys'}">
+            <i class="fa-solid ${item.gender === 'girls' ? 'fa-person-dress' : 'fa-person'}"></i>
+            ${item.gender === 'girls' ? 'سكن طالبات' : 'سكن طلاب'}
+          </span>
+          <button class="fav-btn" onclick="event.preventDefault(); this.classList.toggle('active');">
+            <i class="fa-solid fa-heart"></i>
+          </button>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="card-price">${item.price.toLocaleString()} ج.م <span>/ شهرياً</span></div>
+        <h3 class="card-title">${item.title}</h3>
+        <div class="card-location">
+          <i class="fa-solid fa-location-dot" style="color: var(--accent-gold);"></i>
+          <span>${item.location}</span>
+        </div>
+        <div class="card-features">
+          <span><i class="fa-solid fa-wifi"></i> إنترنت سريع</span>
+          <span><i class="fa-solid fa-snowflake"></i> مكيف بالكامل</span>
+          <span><i class="fa-solid fa-shield-halved"></i> أمن 24 ساعة</span>
+        </div>
+      </div>
+    </a>
+  `).join('');
 }
 
-// Modal Logic
-const modal = document.getElementById("details-modal");
-const closeModalBtn = document.getElementById("close-modal-btn");
+// Search Filter Engine
+function filterListings() {
+  const query = document.getElementById("searchInput").value.toLowerCase();
+  const filtered = properties.filter(p => 
+    p.title.toLowerCase().includes(query) || p.location.toLowerCase().includes(query)
+  );
+  renderListings(filtered);
+}
 
-closeModalBtn.addEventListener("click", () => modal.classList.remove("active"));
-window.addEventListener("click", (e) => { if (e.target === modal) modal.classList.remove("active"); });
+// Chip Filters
+function setFilter(type, btnElement) {
+  document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+  btnElement.classList.add('active');
 
-function openModal(id) {
-    const item = allHousings[id];
-    const modalBody = document.getElementById("modal-body");
+  if (type === 'all') {
+    renderListings(properties);
+  } else if (type === 'luxury') {
+    renderListings(properties.filter(p => p.isLuxury));
+  } else {
+    renderListings(properties.filter(p => p.gender === type));
+  }
+}
 
-    const imagesHTML = item.images.map(src => `<img src="${src}" alt="سكن">`).join("");
-    const amenitiesHTML = item.amenities ? item.amenities.map(a => `<span class="amenity-chip"><i class="fa-solid fa-circle-check"></i> ${a}</span>`).join("") : "";
+// Modal Handlers
+function toggleAuthModal(show) {
+  const modal = document.getElementById("authModal");
+  if (modal) {
+    if (show) modal.classList.add("active");
+    else modal.classList.remove("active");
+  }
+}
 
-    modalBody.innerHTML = `
-        <h2>${item.title}</h2>
-        <p style="color: #64748b; margin-bottom: 16px;"><i class="fa-solid fa-location-dot"></i> ${item.city} - ${item.address}</p>
+function closeAuthModal() {
+  toggleAuthModal(false);
+}
 
-        <div class="gallery">${imagesHTML}</div>
+function openSupportModal() {
+  const modal = document.getElementById("supportModal");
+  if (modal) modal.classList.add("active");
+}
 
-        <h3>عن هذا السكن</h3>
-        <p style="line-height: 1.7; margin-bottom: 16px;">${item.description}</p>
+function closeSupportModal() {
+  const modal = document.getElementById("supportModal");
+  if (modal) modal.classList.remove("active");
+}
 
-        <h3>المرافق والتجهيزات</h3>
-        <div class="amenities-tags">${amenitiesHTML}</div>
+// Dynamic Property Details Loader
+function loadPropertyDetails() {
+  const params = new URLSearchParams(window.location.search);
+  const propId = params.get('id') || 'prop-1';
+  const item = properties.find(p => p.id === propId) || properties[0];
 
-        <div style="margin-top: 16px; font-weight:700;">التأمين المطلوب: ${item.deposit} ج.م</div>
+  document.getElementById("propTitle").innerText = item.title;
+  document.getElementById("propLocation").innerText = item.location;
+  document.getElementById("propPrice").innerText = `${item.price.toLocaleString()} ج.م`;
+  document.getElementById("propImage").src = item.image;
+  
+  const genderBadge = document.getElementById("propGenderBadge");
+  genderBadge.innerText = item.gender === 'girls' ? 'سكن طالبات' : 'سكن طلاب';
+  genderBadge.className = `badge-tag ${item.gender === 'girls' ? 'gender-girls' : 'gender-boys'}`;
 
-        <form id="modal-booking-form" class="booking-form">
-            <h3>طلب حجز السكن</h3>
-            <input type="text" id="user-name" placeholder="الاسم بالكامل" required>
-            <input type="tel" id="user-phone" placeholder="رقم الموبايل / واتساب" required>
-            <label style="font-size:12px; color:#64748b;">تاريخ الانتقال المتوقع:</label>
-            <input type="date" id="move-date" required>
-            <textarea id="booking-notes" rows="2" placeholder="أي ملاحظات إضافية..."></textarea>
-            <button type="submit" class="btn-details" style="width:100%; padding: 14px; font-size:16px;">تأكيد وتنسيق الحجز</button>
-        </form>
-    `;
+  // Initialize Leaflet Map
+  if (typeof L !== 'undefined') {
+    const map = L.map('propertyMap').setView([item.lat, item.lng], 14);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+    L.marker([item.lat, item.lng]).addTo(map).bindPopup(item.title).openPopup();
+  }
 
-    modal.classList.add("active");
+  // Render Beds
+  const bedsGrid = document.getElementById("bedsGrid");
+  bedsGrid.innerHTML = item.beds.map(bed => `
+    <div class="bed-card ${bed.status}" onclick="selectBed('${bed.id}', this, '${bed.status}')">
+      <i class="fa-solid fa-bed"></i>
+      <div style="font-weight: 700; font-size: 13px;">${bed.room}</div>
+      <div style="font-size: 11px; margin-top: 2px;">${bed.status === 'available' ? 'متاح للكرية' : 'محجوز'}</div>
+    </div>
+  `).join('');
+}
 
-    // Handle Booking Form Submit
-    document.getElementById("modal-booking-form").addEventListener("submit", async (e) => {
-        e.preventDefault();
+// Interactive Bed Selection logic
+function selectBed(bedId, element, status) {
+  if (status === 'occupied') return;
+  document.querySelectorAll('.bed-card').forEach(b => b.classList.remove('selected'));
+  element.classList.add('selected');
+  selectedBedId = bedId;
+}
 
-        const bookingData = {
-            housingId: id,
-            housingTitle: item.title,
-            userName: document.getElementById("user-name").value,
-            userPhone: document.getElementById("user-phone").value,
-            moveInDate: document.getElementById("move-date").value,
-            notes: document.getElementById("booking-notes").value,
-            status: "pending",
-            createdAt: Date.now()
-        };
+// Direct Auth & Booking Handler
+function loginWithGoogle() {
+  alert("جاري الاتصال بـ Google Sign-In...");
+  closeAuthModal();
+}
 
-        const newRef = push(ref(db, "bookings"));
-        await set(newRef, bookingData);
+function loginWithFacebook() {
+  alert("جاري الاتصال بـ Facebook SDK...");
+  closeAuthModal();
+}
 
-        alert("تم إرسال طلب الحجز بنجاح! سيتواصل معك المسؤول قريباً لتأكيد المعاينة.");
-        modal.classList.remove("active");
-    });
+function confirmBooking() {
+  if (!selectedBedId) {
+    alert("برجاء اختيار السرير المطلوب أولاً من القائمة.");
+    return;
+  }
+  toggleAuthModal(true);
 }
