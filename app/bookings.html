@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>حجوزاتي | SAKANI-X</title>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <header class="app-header">
+    <span style="font-weight: 800; font-size: 18px; color: var(--primary);">حجوزاتي النشطة</span>
+  </header>
+
+  <main style="padding: 20px;" id="bookingsList">
+    <!-- Active Bookings Container -->
+    <div class="housing-card" style="padding: 18px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <span class="badge-tag" style="background: rgba(16, 185, 129, 0.15); color: var(--success);">مؤكد ومفعل</span>
+        <span style="font-size: 12px; color: var(--text-muted);">رقم الحجز: #SX-8842</span>
+      </div>
+      <h3 style="font-size: 16px; font-weight: 700;">جناح الروضة الفاخر - أسيوط الجديدة</h3>
+      <p style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">غرفة رقم 2 - سرير A</p>
+      <hr style="border: none; border-top: 1px dashed var(--border-color); margin: 12px 0;" />
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <span style="font-weight: 700; color: var(--accent-gold);">2,200 ج.م / شهرياً</span>
+        <button class="chip active" style="padding: 6px 14px; font-size: 12px;">تواصل مع المالك</button>
+      </div>
+    </div>
+  </main>
+
+  <nav class="bottom-nav">
+    <a href="index.html" class="nav-item">
+      <i class="fa-solid fa-house"></i>
+      <span>الرئيسية</span>
+    </a>
+    <a href="index.html" class="nav-item">
+      <i class="fa-solid fa-heart"></i>
+      <span>المفضلة</span>
+    </a>
+    <a href="bookings.html" class="nav-item active">
+      <i class="fa-solid fa-calendar-check"></i>
+      <span>حجوزاتي</span>
+    </a>
+    <a href="#" class="nav-item" onclick="openSupportModal(); return false;">
+      <i class="fa-solid fa-headset"></i>
+      <span>الدعم الفني</span>
+    </a>
+  </nav>
+
+</body>
+</html>
