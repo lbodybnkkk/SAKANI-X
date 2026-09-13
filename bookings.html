@@ -1,66 +1,45 @@
-<!-- داخل bookings.html، استبدل main -->
-<main style="padding: 20px;" id="bookingsList">
-    <div id="bookingsContent">
-        <!-- سيتم التحميل ديناميكياً -->
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>حجوزاتي | SAKANI-X</title>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <header class="app-header">
+    <a href="index.html" class="nav-item" style="width:auto; color: var(--primary);">
+      <i class="fa-solid fa-arrow-right" style="font-size: 20px;"></i>
+    </a>
+    <span style="font-weight: 800; font-size: 16px;">حجوزاتي</span>
+    <div style="width: 42px;"></div>
+  </header>
+
+  <!-- Filter Tabs -->
+  <div class="filter-chips" style="padding-top: 16px;">
+    <button class="chip active" data-status="all" onclick="filterBookings('all', this)">الكل</button>
+    <button class="chip" data-status="pending" onclick="filterBookings('pending', this)">⏳ قيد المراجعة</button>
+    <button class="chip" data-status="approved" onclick="filterBookings('approved', this)">✅ مقبولة</button>
+    <button class="chip" data-status="rejected" onclick="filterBookings('rejected', this)">❌ مرفوضة</button>
+  </div>
+
+  <main style="padding: 8px 20px 40px;" id="bookingsList">
+    <div style="text-align:center; padding:60px 20px; color: var(--text-muted);">
+      <i class="fa-solid fa-spinner fa-spin" style="font-size:32px;"></i>
+      <p style="margin-top:12px;">جاري تحميل حجوزاتك...</p>
     </div>
-</main>
+  </main>
 
-<script type="module">
-import { auth } from "./firebase-config.js";
-import { listenToUserBookings } from "./data-service.js";
-import { showToast } from "./auth.js";
+  <nav class="bottom-nav">
+    <a href="index.html" class="nav-item"><i class="fa-solid fa-house"></i><span>الرئيسية</span></a>
+    <a href="index.html#favorites" class="nav-item"><i class="fa-solid fa-heart"></i><span>المفضلة</span></a>
+    <a href="bookings.html" class="nav-item active"><i class="fa-solid fa-calendar-check"></i><span>حجوزاتي</span></a>
+    <a href="profile.html" class="nav-item"><i class="fa-solid fa-user"></i><span>حسابي</span></a>
+  </nav>
 
-auth.onAuthStateChanged((user) => {
-    const container = document.getElementById("bookingsContent");
-    if (!user) {
-        container.innerHTML = `
-            <div style="text-align:center; padding:60px 20px;">
-                <i class="fa-solid fa-lock" style="font-size:48px; color:var(--text-muted); opacity:0.4;"></i>
-                <h3 style="margin-top:16px;">سجّل دخولك لعرض حجوزاتك</h3>
-                <button onclick="window.location.href='index.html'" 
-                        class="btn-submit-luxury" style="margin-top:16px; width:auto; padding:12px 32px;">
-                    العودة للرئيسية
-                </button>
-            </div>`;
-        return;
-    }
-
-    listenToUserBookings(user.uid, (bookings) => {
-        if (bookings.length === 0) {
-            container.innerHTML = `
-                <div style="text-align:center; padding:60px 20px; color:var(--text-muted);">
-                    <i class="fa-solid fa-calendar-xmark" style="font-size:48px; margin-bottom:16px; opacity:0.3;"></i>
-                    <h3>لا توجد حجوزات بعد</h3>
-                    <p>تصفح الوحدات واحجز سريرك الآن</p>
-                </div>`;
-            return;
-        }
-
-        container.innerHTML = bookings.map(b => {
-            const statusMap = {
-                pending: { label: "قيد المراجعة", color: "#f59e0b", bg: "rgba(245,158,11,0.15)" },
-                approved: { label: "مؤكد ومفعل", color: "#10b981", bg: "rgba(16,185,129,0.15)" },
-                rejected: { label: "مرفوض", color: "#ef4444", bg: "rgba(239,68,68,0.15)" }
-            };
-            const s = statusMap[b.status] || statusMap.pending;
-            return `
-            <div class="housing-card" style="padding:18px; margin-bottom:16px;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-                    <span class="badge-tag" style="background:${s.bg}; color:${s.color};">${s.label}</span>
-                    <span style="font-size:12px; color:var(--text-muted);">#${b.id?.slice(-6)}</span>
-                </div>
-                <h3 style="font-size:16px; font-weight:700;">${b.housingTitle}</h3>
-                <p style="font-size:13px; color:var(--text-muted); margin-top:4px;">تاريخ الانتقال: ${b.moveInDate}</p>
-                ${b.notes ? `<p style="font-size:13px; color:var(--text-muted); margin-top:4px;">ملاحظات: ${b.notes}</p>` : ''}
-                <hr style="border:none; border-top:1px dashed var(--border-color); margin:12px 0;">
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <a href="https://wa.me/201000000000" target="_blank" 
-                       class="chip active" style="padding:6px 14px; font-size:12px; text-decoration:none;">
-                        تواصل مع الدعم
-                    </a>
-                </div>
-            </div>`;
-        }).join('');
-    });
-});
-</script>
+  <script type="module" src="bookings.js"></script>
+</body>
+</html>
