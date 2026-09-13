@@ -9,8 +9,8 @@ const firebaseConfig = {
     databaseURL: "https://cmd1-1c696-default-rtdb.firebaseio.com/",
     projectId: "cmd1-1c696",
     storageBucket: "cmd1-1c696.appspot.com",
-    messagingSenderId: "YOUR_SENDER_ID",
-    appId: "YOUR_APP_ID"
+    messagingSenderId: "453052774738",
+    appId: "1:453052774738:web:af04e9df543cc42a57628b"
 };
 
 const app = initializeApp(firebaseConfig);
