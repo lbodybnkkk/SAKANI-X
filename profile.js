@@ -47,7 +47,6 @@ async function saveProfile() {
     const city = document.getElementById("pfCity").value.trim();
     const university = document.getElementById("pfUniversity").value.trim();
 
-    // Validation
     if (!name || name.length < 3) return showToast("👤 برجاء إدخال اسمك الكامل (3 أحرف على الأقل)", "error");
     if (!/^01[0-2,5]\d{8}$/.test(phone)) return showToast("📱 رقم هاتف مصري غير صحيح (مثال: 01012345678)", "error");
     if (!governorate) return showToast("📍 برجاء اختيار المحافظة", "error");
