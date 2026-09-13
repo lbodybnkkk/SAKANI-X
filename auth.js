@@ -4,145 +4,204 @@ import {
     signInWithPopup, signOut, onAuthStateChanged,
     createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile
 } from "./firebase-config.js";
-import { db, ref, set, get, child } from "./firebase-config.js";
+import { db, ref, set, get } from "./firebase-config.js";
 
 let currentUser = null;
+let userProfile = null;
 let authCallbacks = [];
 
-// مراقبة حالة المستخدم
+// ========== ترجمة أخطاء Firebase للعربي ==========
+function translateAuthError(error) {
+    const code = error.code || "";
+    const map = {
+        "auth/invalid-credential": "❌ البريد الإلكتروني أو كلمة المرور غير صحيحة. لو حسابك جديد، اضغط على 'حساب جديد' الأول.",
+        "auth/user-not-found": "❌ لا يوجد حساب بهذا البريد. اضغط على 'حساب جديد' لإنشائه.",
+        "auth/wrong-password": "❌ كلمة المرور غير صحيحة. جرّب مرة أخرى أو اضغط 'نسيت كلمة المرور'.",
+        "auth/invalid-email": "❌ صيغة البريد الإلكتروني غير صحيحة.",
+        "auth/email-already-in-use": "⚠️ هذا البريد مستخدم بالفعل. جرّب تسجيل الدخول بدلاً من إنشاء حساب.",
+        "auth/weak-password": "🔒 كلمة المرور ضعيفة جداً (6 أحرف على الأقل).",
+        "auth/too-many-requests": "⏳ محاولات كثيرة فاشلة. انتظر دقيقة وحاول مجدداً.",
+        "auth/popup-closed-by-user": "🚪 تم إغلاق نافذة تسجيل الدخول.",
+        "auth/popup-blocked": "🚫 المتصفح منع النافذة المنبثقة. اسمح بها وأعد المحاولة.",
+        "auth/account-exists-with-different-credential": "⚠️ البريد مسجل بطريقة تسجيل أخرى. جرّب Google أو Facebook.",
+        "auth/network-request-failed": "📡 فشل الاتصال بالإنترنت. تحقق من الشبكة.",
+        "auth/cancelled-popup-request": "❌ تم إلغاء العملية.",
+        "auth/operation-not-allowed": "⚙️ هذه الطريقة غير مفعّلة. راجع إعدادات Firebase.",
+        "auth/unauthorized-domain": "🌐 النطاق الحالي غير مصرح به في Firebase."
+    };
+    return map[code] || `⚠️ حدث خطأ: ${error.message}`;
+}
+
+// ========== مراقبة حالة المستخدم ==========
 onAuthStateChanged(auth, async (user) => {
     if (user) {
         currentUser = user;
-        // حفظ بيانات المستخدم في قاعدة البيانات
         const userRef = ref(db, `users/${user.uid}`);
         const snapshot = await get(userRef);
+        
         if (!snapshot.exists()) {
+            // حساب جديد — ننشئ بروفايل فارغ
             await set(userRef, {
-                name: user.displayName || "مستخدم",
+                name: user.displayName || "",
                 email: user.email,
                 photo: user.photoURL || "",
+                phone: "",
+                governorate: "",
+                city: "",
+                university: "",
+                profileComplete: false,
                 createdAt: Date.now()
             });
+            userProfile = { profileComplete: false };
+        } else {
+            userProfile = snapshot.val();
         }
-        // تحديث الواجهة
+        
         updateAuthUI(true, user);
     } else {
         currentUser = null;
+        userProfile = null;
         updateAuthUI(false, null);
     }
-    // تنفيذ الـ callbacks
-    authCallbacks.forEach(cb => cb(user));
+    
+    authCallbacks.forEach(cb => cb(user, userProfile));
 });
 
-// تحديث الواجهة بناءً على حالة الدخول
 function updateAuthUI(isLoggedIn, user) {
     const authBtn = document.getElementById("authTriggerBtn");
     if (!authBtn) return;
     
     if (isLoggedIn && user) {
         authBtn.innerHTML = user.photoURL 
-            ? `<img src="${user.photoURL}" alt="${user.displayName}">`
+            ? `<img src="${user.photoURL}" alt="${user.displayName || 'User'}" style="width:100%; height:100%; object-fit:cover; border-radius:50%;">`
             : `<i class="fa-solid fa-user" style="color: var(--primary);"></i>`;
-        authBtn.onclick = () => showUserMenu();
+        authBtn.onclick = () => window.location.href = "profile.html";
     } else {
         authBtn.innerHTML = `<i class="fa-solid fa-user" style="color: var(--primary);"></i>`;
-        authBtn.onclick = () => toggleAuthModal(true);
+        authBtn.onclick = () => window.toggleAuthModal(true);
     }
 }
 
-// تسجيل الدخول بـ Google
+// ========== تسجيل الدخول بـ Google ==========
 async function loginWithGoogle() {
     try {
-        const result = await signInWithPopup(auth, googleProvider);
-        closeAuthModal();
+        showToast("جاري الاتصال بـ Google...", "info");
+        await signInWithPopup(auth, googleProvider);
+        if (window.closeAuthModal) window.closeAuthModal();
         showToast("تم تسجيل الدخول بنجاح ✅", "success");
-        return result.user;
     } catch (error) {
         console.error("Google login error:", error);
-        showToast("فشل تسجيل الدخول بـ Google: " + error.message, "error");
+        showToast(translateAuthError(error), "error");
     }
 }
 
-// تسجيل الدخول بـ Facebook
+// ========== تسجيل الدخول بـ Facebook ==========
 async function loginWithFacebook() {
     try {
-        const result = await signInWithPopup(auth, facebookProvider);
-        closeAuthModal();
+        showToast("جاري الاتصال بـ Facebook...", "info");
+        await signInWithPopup(auth, facebookProvider);
+        if (window.closeAuthModal) window.closeAuthModal();
         showToast("تم تسجيل الدخول بنجاح ✅", "success");
-        return result.user;
     } catch (error) {
         console.error("Facebook login error:", error);
-        showToast("فشل تسجيل الدخول بـ Facebook: " + error.message, "error");
+        showToast(translateAuthError(error), "error");
     }
 }
 
-// تسجيل الدخول / إنشاء حساب بالبريد
+// ========== تسجيل/دخول بالبريد ==========
 async function handleEmailAuth(isSignUp) {
-    const email = document.getElementById("authEmail").value.trim();
-    const password = document.getElementById("authPassword").value;
+    const email = document.getElementById("authEmail")?.value.trim();
+    const password = document.getElementById("authPassword")?.value;
     const name = document.getElementById("authName")?.value.trim() || "";
+    const submitBtn = document.getElementById("authSubmitBtn");
     
-    if (!email || !password) {
-        showToast("برجاء إدخال البريد وكلمة المرور", "error");
+    // ✅ التحقق من المدخلات أولاً (بدون رسائل Firebase الطويلة)
+    if (!email) {
+        showToast("📧 برجاء إدخال البريد الإلكتروني", "error");
         return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        showToast("📧 صيغة البريد الإلكتروني غير صحيحة", "error");
+        return;
+    }
+    if (!password) {
+        showToast("🔒 برجاء إدخال كلمة المرور", "error");
+        return;
+    }
+    if (password.length < 6) {
+        showToast("🔒 كلمة المرور يجب أن تكون 6 أحرف على الأقل", "error");
+        return;
+    }
+    if (isSignUp && !name) {
+        showToast("👤 برجاء إدخال الاسم الكامل", "error");
+        return;
+    }
+    
+    // Disable button أثناء التنفيذ
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerText = isSignUp ? "جاري إنشاء الحساب..." : "جاري الدخول...";
     }
     
     try {
         if (isSignUp) {
             const result = await createUserWithEmailAndPassword(auth, email, password);
             if (name) await updateProfile(result.user, { displayName: name });
-            showToast("تم إنشاء الحساب بنجاح ✅", "success");
+            showToast("🎉 تم إنشاء حسابك بنجاح!", "success");
         } else {
             await signInWithEmailAndPassword(auth, email, password);
-            showToast("تم تسجيل الدخول بنجاح ✅", "success");
+            showToast("✅ تم تسجيل الدخول بنجاح", "success");
         }
-        closeAuthModal();
+        if (window.closeAuthModal) window.closeAuthModal();
     } catch (error) {
         console.error("Email auth error:", error);
-        const msg = error.code === "auth/email-already-in-use" ? "البريد مستخدم بالفعل" :
-                    error.code === "auth/wrong-password" ? "كلمة المرور غير صحيحة" :
-                    error.code === "auth/user-not-found" ? "المستخدم غير موجود" :
-                    "حدث خطأ: " + error.message;
-        showToast(msg, "error");
+        showToast(translateAuthError(error), "error");
+    } finally {
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerText = isSignUp ? "إنشاء حساب" : "دخول";
+        }
     }
 }
 
-// تسجيل الخروج
+// ========== تسجيل الخروج ==========
 async function logoutUser() {
     try {
         await signOut(auth);
-        showToast("تم تسجيل الخروج", "info");
-        window.location.href = "index.html";
+        showToast("تم تسجيل الخروج 👋", "info");
+        setTimeout(() => window.location.href = "index.html", 800);
     } catch (error) {
         showToast("فشل تسجيل الخروج", "error");
     }
 }
 
-// التحقق من تسجيل الدخول (للمسارات المحمية)
-function requireAuth(callback) {
-    if (auth.currentUser) {
-        callback(auth.currentUser);
-    } else {
-        authCallbacks.push((user) => {
-            if (user) callback(user);
-        });
-    }
+// ========== التحقق من البروفايل قبل الحجز ==========
+async function isProfileComplete() {
+    if (!currentUser) return false;
+    const snap = await get(ref(db, `users/${currentUser.uid}`));
+    if (!snap.exists()) return false;
+    const profile = snap.val();
+    return !!(profile.name && profile.phone && profile.governorate);
 }
 
-// Toast notification
+// ========== Toast ==========
 function showToast(message, type = "info") {
+    const existing = document.querySelector(".toast");
+    if (existing) existing.remove();
+    
     const toast = document.createElement("div");
     toast.className = `toast toast-${type}`;
     toast.textContent = message;
     document.body.appendChild(toast);
-    setTimeout(() => toast.classList.add("show"), 100);
+    setTimeout(() => toast.classList.add("show"), 50);
     setTimeout(() => {
         toast.classList.remove("show");
         setTimeout(() => toast.remove(), 300);
-    }, 3000);
+    }, 3500);
 }
 
 export { 
-    currentUser, loginWithGoogle, loginWithFacebook, 
-    handleEmailAuth, logoutUser, requireAuth, showToast 
+    currentUser, userProfile, loginWithGoogle, loginWithFacebook, 
+    handleEmailAuth, logoutUser, isProfileComplete, showToast,
+    translateAuthError, onAuthStateChanged, auth
 };
