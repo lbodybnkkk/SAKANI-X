@@ -1,11 +1,13 @@
 // details.js
-import { auth, db, ref, onValue, push, set } from "./firebase-config.js";
+import { auth, db, ref, onValue, push, set, get, remove } from "./firebase-config.js";
 import { showToast, onAuthStateChanged, isProfileComplete } from "./auth.js";
 
 let currentUser = null;
 let currentHousing = null;
 let selectedBedId = null;
 let isFav = false;
+let currentImageIndex = 0;
+let imagesList = [];
 
 onAuthStateChanged(auth, (user) => { currentUser = user; });
 
@@ -25,13 +27,12 @@ onValue(ref(db, `housings/${propId}`), (snapshot) => {
     document.getElementById("propTitle").innerText = h.title || "وحدة سكنية";
     document.getElementById("propLocation").innerText = h.address || h.city || "—";
     document.getElementById("propPrice").innerText = `${(h.price || 0).toLocaleString()} ج.م`;
-    document.getElementById("propImage").src = h.images?.[0] || "https://via.placeholder.com/800x600?text=SAKANI-X";
     document.getElementById("propDescription").innerText = h.description || "لا يوجد وصف متاح.";
 
-    const badge = document.getElementById("propGenderBadge");
-    const isGirls = h.gender?.includes("طالبات");
-    badge.innerText = isGirls ? "سكن طالبات" : "سكن طلاب";
-    badge.className = `badge-tag ${isGirls ? 'gender-girls' : 'gender-boys'}`;
+    // معرض الصور
+    imagesList = h.images || ["https://via.placeholder.com/800x600?text=SAKANI-X"];
+    currentImageIndex = 0;
+    renderGallery();
 
     // Amenities
     const am = document.getElementById("propAmenities");
@@ -62,15 +63,76 @@ onValue(ref(db, `housings/${propId}`), (snapshot) => {
             L.marker([lat, lng]).addTo(map).bindPopup(h.title).openPopup();
         }
     }, 100);
+
+    // المفضلة
+    if (currentUser) {
+        get(ref(db, `favorites/${currentUser.uid}/${propId}`)).then(snap => {
+            isFav = snap.exists();
+            const btn = document.getElementById("detailFavBtn");
+            btn.classList.toggle("active", isFav);
+            btn.querySelector("i").className = `fa-${isFav ? 'solid' : 'regular'} fa-heart`;
+        });
+    }
 }, (error) => {
     console.error("Load error:", error);
     document.getElementById("propTitle").innerText = "⚠️ فشل تحميل البيانات";
     showToast("فشل تحميل الوحدة", "error");
 });
 
+// ========== معرض الصور ==========
+function renderGallery() {
+    const track = document.getElementById("galleryTrack");
+    const dots = document.getElementById("galleryDots");
+    const counter = document.getElementById("galleryCounter");
+    
+    if (!track) return;
+    
+    track.innerHTML = imagesList.map(img => 
+        `<img src="${img}" onerror="this.src='https://via.placeholder.com/800x600?text=SAKANI-X'">`
+    ).join('');
+    
+    dots.innerHTML = imagesList.map((_, i) => 
+        `<button class="gallery-dot ${i === 0 ? 'active' : ''}" onclick="goToImage(${i})"></button>`
+    ).join('');
+    
+    counter.innerText = `1 / ${imagesList.length}`;
+    updateGallery();
+}
+
+function updateGallery() {
+    const track = document.getElementById("galleryTrack");
+    if (!track) return;
+    track.style.transform = `translateX(${currentImageIndex * 100}%)`;
+    
+    document.querySelectorAll(".gallery-dot").forEach((d, i) => {
+        d.classList.toggle("active", i === currentImageIndex);
+    });
+    
+    const counter = document.getElementById("galleryCounter");
+    if (counter) counter.innerText = `${currentImageIndex + 1} / ${imagesList.length}`;
+}
+
+function nextImage() {
+    currentImageIndex = (currentImageIndex + 1) % imagesList.length;
+    updateGallery();
+}
+
+function prevImage() {
+    currentImageIndex = (currentImageIndex - 1 + imagesList.length) % imagesList.length;
+    updateGallery();
+}
+
+function goToImage(index) {
+    currentImageIndex = index;
+    updateGallery();
+}
+
 // ========== اختيار السرير ==========
 function selectBed(bedId, el, status, roomLabel) {
-    if (status === "occupied") return;
+    if (status === "occupied") {
+        showToast("⚠️ هذا السرير محجوز بالفعل", "error");
+        return;
+    }
     document.querySelectorAll(".bed-card").forEach(b => b.classList.remove("selected"));
     el.classList.add("selected");
     selectedBedId = bedId;
@@ -80,7 +142,6 @@ function selectBed(bedId, el, status, roomLabel) {
 // ========== المفضلة ==========
 async function toggleDetailFav() {
     if (!currentUser) return showToast("سجّل دخولك أولاً", "info");
-    const { get, remove, set: setFb } = await import("./firebase-config.js");
     const favRef = ref(db, `favorites/${currentUser.uid}/${propId}`);
     const snap = await get(favRef);
     if (snap.exists()) {
@@ -88,7 +149,7 @@ async function toggleDetailFav() {
         isFav = false;
         showToast("تمت الإزالة من المفضلة", "info");
     } else {
-        await setFb(favRef, { addedAt: Date.now() });
+        await set(favRef, { addedAt: Date.now() });
         isFav = true;
         showToast("تمت الإضافة للمفضلة ❤️", "success");
     }
@@ -183,7 +244,7 @@ async function submitBooking() {
     btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> جاري الإرسال...`;
 
     try {
-        const userSnap = await (await import("./firebase-config.js")).get(ref(db, `users/${currentUser.uid}`));
+        const userSnap = await get(ref(db, `users/${currentUser.uid}`));
         const profile = userSnap.val() || {};
 
         const bookingData = {
@@ -227,3 +288,6 @@ window.toggleDetailFav = toggleDetailFav;
 window.confirmBooking = confirmBooking;
 window.submitBooking = submitBooking;
 window.closeBookingModal = closeBookingModal;
+window.nextImage = nextImage;
+window.prevImage = prevImage;
+window.goToImage = goToImage;
