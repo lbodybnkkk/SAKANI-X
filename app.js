@@ -2,7 +2,9 @@
    SAKANI-X CORE JS ENGINE — Firebase Connected
    ========================================== */
 
-import { auth } from "./firebase-config.js";
+import { 
+    auth, db, ref, onValue, get, update, remove, push, set 
+} from "./firebase-config.js";
 import { 
     loginWithGoogle, loginWithFacebook, handleEmailAuth, 
     logoutUser, showToast, resetPassword
