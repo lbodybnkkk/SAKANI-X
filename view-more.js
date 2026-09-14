@@ -60,10 +60,12 @@ function renderViewMore() {
 
     let filtered = allHousings;
     
+    // فلترة حسب القسم
     if (currentSectionId) {
         filtered = filtered.filter(h => h.section === currentSectionId);
     }
 
+    // فلترة حسب البحث
     const query = document.getElementById("searchInput")?.value.toLowerCase() || "";
     if (query) {
         filtered = filtered.filter(p => 
@@ -72,6 +74,7 @@ function renderViewMore() {
         );
     }
 
+    // فلترة حسب الجنس
     if (activeFilter === "luxury") {
         filtered = filtered.filter(p => p.isLuxury);
     } else if (activeFilter !== "all") {
@@ -82,8 +85,8 @@ function renderViewMore() {
         container.innerHTML = `
             <div class="text-center py-16 px-4 text-slate-400 col-span-full">
                 <i class="fa-solid fa-building text-5xl mb-4 opacity-30"></i>
-                <h3 class="text-lg font-bold text-slate-900 mb-1">لا توجد وحدات في هذا القسم</h3>
-                <p class="text-sm">سيتم إضافة وحدات جديدة قريباً</p>
+                <h3 class="text-lg font-bold text-slate-900 mb-1">لا توجد وحدات مطابقة</h3>
+                <p class="text-sm">جرّب فلتر مختلف أو ابحث بكلمة أخرى</p>
             </div>`;
         return;
     }
