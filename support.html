@@ -7,15 +7,13 @@
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        * { font-family: 'Tajawal', sans-serif; }
-    </style>
+    <style>* { font-family: 'Tajawal', sans-serif; }</style>
 </head>
 <body class="bg-slate-50 text-slate-900 pb-24">
 
     <header class="sticky top-0 z-50 bg-white/85 backdrop-blur-xl border-b border-slate-200 px-5 py-3.5 flex items-center gap-4">
         <a href="index.html" class="text-slate-900 text-xl"><i class="fa-solid fa-arrow-right"></i></a>
-        <h1 class="text-lg font-extrabold text-slate-900">الدعم الفني</h1>
+        <h1 class="text-lg font-extrabold">الدعم الفني</h1>
     </header>
 
     <main class="px-5 py-6 max-w-2xl mx-auto">
@@ -23,7 +21,7 @@
             <div class="w-20 h-20 rounded-full bg-amber-50 flex items-center justify-center mx-auto mb-4">
                 <i class="fa-solid fa-headset text-3xl text-amber-500"></i>
             </div>
-            <h2 class="text-xl font-extrabold text-slate-900">مركز الدعم والمساعدة</h2>
+            <h2 class="text-xl font-extrabold">مركز الدعم والمساعدة</h2>
             <p class="text-sm text-slate-500 mt-2">فريق خدمة العملاء متواجد على مدار 24 ساعة لخدمتك</p>
         </div>
 
@@ -32,7 +30,7 @@
                 <i class="fa-brands fa-whatsapp text-2xl"></i>
                 <span>محادثة واتساب مباشرة</span>
             </a>
-            <a href="https://t.me/CMD" target="_blank" class="w-full h-14 rounded-2xl bg-[#0088cc] text-white flex items-center justify-center gap-3 text-sm font-bold shadow-lg active:scale-[0.98] transition-all">
+            <a href="https://t.me/C_M_D_1" target="_blank" class="w-full h-14 rounded-2xl bg-[#0088cc] text-white flex items-center justify-center gap-3 text-sm font-bold shadow-lg active:scale-[0.98] transition-all">
                 <i class="fa-brands fa-telegram text-2xl"></i>
                 <span>تواصل مع المطور CMD</span>
             </a>
@@ -43,9 +41,9 @@
         </div>
 
         <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
-            <h3 class="text-base font-bold text-slate-900 mb-4"><i class="fa-solid fa-ticket text-amber-500"></i> إرسال تذكرة دعم</h3>
+            <h3 class="text-base font-bold mb-4"><i class="fa-solid fa-ticket text-amber-500"></i> إرسال تذكرة دعم</h3>
             <input type="text" id="ticketSubject" class="w-full h-12 rounded-xl border border-slate-200 px-4 text-sm outline-none focus:border-amber-500 mb-3" placeholder="موضوع الاستفسار">
-            <textarea id="ticketMessage" rows="4" class="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-amber-500 mb-4 resize-none" placeholder="اكتب استفسارك أو مشكلتك بالتفصيل..."></textarea>
+            <textarea id="ticketMessage" rows="4" class="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-amber-500 mb-4 resize-none" placeholder="اكتب استفسارك بالتفصيل..."></textarea>
             <button class="w-full h-12 bg-gradient-to-br from-slate-900 to-slate-800 text-white font-bold rounded-xl shadow-lg active:scale-[0.98] transition-all" onclick="submitTicket()">
                 <i class="fa-solid fa-paper-plane"></i> إرسال التذكرة
             </button>
@@ -66,14 +64,9 @@
             const subject = document.getElementById("ticketSubject").value.trim();
             const message = document.getElementById("ticketMessage").value.trim();
             if (!subject || !message) return showToast("أكمل جميع الحقول", "error");
-            
             try {
                 const newRef = push(ref(db, "support_tickets"));
-                await set(newRef, {
-                    subject, message,
-                    status: "open",
-                    createdAt: Date.now()
-                });
+                await set(newRef, { subject, message, status: "open", createdAt: Date.now() });
                 showToast("تم إرسال تذكرتك بنجاح، سيتم الرد عليك قريباً", "success");
                 document.getElementById("ticketSubject").value = "";
                 document.getElementById("ticketMessage").value = "";
