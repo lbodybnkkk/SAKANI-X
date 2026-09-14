@@ -57,7 +57,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }));
             applyFiltersAndRender();
             renderSections();
-        });function
+        });
     }
 });
 
@@ -66,10 +66,7 @@ listenToSections((sections) => {
     renderSections();
 });
 
- // ==========================================
-// دالة الفلترة الشاملة (تفلتر البيانات أولاً)
-// ==========================================
-function getFilteredHousings() {
+function applyFiltersAndRender() {
     const query = document.getElementById("searchInput")?.value.toLowerCase() || "";
     let filtered = allHousings.filter(p => 
         p.title?.toLowerCase().includes(query) || 
@@ -83,62 +80,8 @@ function getFilteredHousings() {
         filtered = filtered.filter(p => p.gender === activeFilter);
     }
 
-    return filtered;
-}
-
-// ==========================================
-// تحديث العرض للقائمة الرئيسية والأقسام معاُ
-// ==========================================
-function applyFiltersAndRender() {
-    const filtered = getFilteredHousings();
     renderListings(filtered);
-    renderSections(filtered); // استدعاء الأقسام بالبيانات المفلترة
 }
-
-// ==========================================
-// عرض الأقسام المفلترة ديناميكياً
-// ==========================================
-function renderSections(filteredHousings = null) {
-    const container = document.getElementById("sectionsContainer");
-    if (!container) return;
-    
-    if (allSections.length === 0) {
-        container.innerHTML = "";
-        return;
-    }
-    
-    // استخدام البيانات المفلترة الحالية (إن وجدت) أو حسابها
-    const sourceData = filteredHousings || getFilteredHousings();
-    
-    container.innerHTML = allSections.map(section => {
-        // فلترة الوحدات التابعة للقسم والتي تطابق خيار (طالبات / طلاب / بحث) في نفس الوقت
-        const sectionHousings = sourceData.filter(h => h.section === section.id);
-        
-        // إذا كان القسم لا يحتوي على أي وحدات تطابق الفلتر الحالي، ين مخفياً تماماً
-        if (sectionHousings.length === 0) return "";
-        
-        return `
-        <div class="mt-6 px-5">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-extrabold text-slate-900 flex items-center gap-2">
-                    <i class="fa-solid ${section.icon || 'fa-building'} text-amber-500"></i>
-                    ${section.name}
-                </h3>
-                <a href="view-more.html?category=${section.id}&gender=${activeFilter}" class="text-xs font-bold text-amber-600 border border-slate-200 px-3 py-1.5 rounded-full hover:bg-amber-50 transition-all flex items-center gap-1">
-                    عرض المزيد (${sectionHousings.length}) <i class="fa-solid fa-chevron-left"></i>
-                </a>
-            </div>
-            <div class="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
-                ${sectionHousings.slice(0, 6).map(item => `
-                    <div class="min-w-[260px] max-w-[260px] flex-shrink-0">
-                        ${renderCard(item)}
-                    </div>
-                `).join('')}
-            </div>
-        </div>`;
-    }).join('');
-}
-
 
 function renderCard(item) {
     const isFav = userFavorites.includes(item.id);
