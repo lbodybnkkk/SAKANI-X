@@ -77,6 +77,57 @@ async function saveProfile() {
         btn.innerHTML = `<i class="fa-solid fa-floppy-disk"></i> حفظ البيانات`;
     }
 }
+const governorates = [
+    "القاهرة", "الجيزة", "الإسكندرية", "الدقهلية", "الشرقية", "القليوبية",
+    "المنوفية", "الغربية", "كفر الشيخ", "دمياط", "بورسعيد", "الإسماعيلية",
+    "السويس", "شمال سيناء", "جنوب سيناء", "الفيوم", "بني سويف", "المنيا",
+    "أسيوط", "سوهاج", "قنا", "الأقصر", "أسوان", "البحر الأحمر",
+    "الوادي الجديد", "مطروح"
+];
+
+function renderGovernorates(filter = "") {
+    const list = document.getElementById("governorateList");
+    const filtered = governorates.filter(g => g.includes(filter));
+    list.innerHTML = filtered.map(g => `
+        <button type="button" onclick="selectGovernorate('${g}')" 
+                class="w-full text-right px-4 py-2.5 text-sm hover:bg-amber-50 transition-all">
+            ${g}
+        </button>
+    `).join('');
+}
+
+function toggleGovernorateDropdown() {
+    const dd = document.getElementById("governorateDropdown");
+    dd.classList.toggle("hidden");
+    if (!dd.classList.contains("hidden")) {
+        renderGovernorates();
+        document.getElementById("govSearch").focus();
+    }
+}
+
+function selectGovernorate(gov) {
+    document.getElementById("selectedGovernorate").innerText = gov;
+    document.getElementById("selectedGovernorate").classList.remove("text-slate-400");
+    document.getElementById("pfGovernorate").value = gov;
+    document.getElementById("governorateDropdown").classList.add("hidden");
+}
+
+function filterGovernorates() {
+    const query = document.getElementById("govSearch").value;
+    renderGovernorates(query);
+}
+
+document.addEventListener("click", (e) => {
+    const dropdown = document.getElementById("governorateDropdown");
+    const btn = document.getElementById("governorateBtn");
+    if (dropdown && !dropdown.contains(e.target) && !btn.contains(e.target)) {
+        dropdown.classList.add("hidden");
+    }
+});
+
+window.toggleGovernorateDropdown = toggleGovernorateDropdown;
+window.selectGovernorate = selectGovernorate;
+window.filterGovernorates = filterGovernorates;
 
 function handleLogout() {
     if (confirm("هل تريد تسجيل الخروج؟")) logoutUser();
