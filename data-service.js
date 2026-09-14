@@ -1,10 +1,8 @@
-// data-service.js
 import { 
     db, ref, push, set, onValue, update, remove, 
     get, child, query, orderByChild, equalTo 
 } from "./firebase-config.js";
 
-// ========== السكنات ==========
 function listenToHousings(callback) {
     const housingsRef = ref(db, "housings");
     onValue(housingsRef, (snapshot) => {
@@ -14,7 +12,6 @@ function listenToHousings(callback) {
     });
 }
 
-// ========== جلب سكن واحد ==========
 function listenToSingleHousing(housingId, callback) {
     const housingRef = ref(db, `housings/${housingId}`);
     onValue(housingRef, (snapshot) => {
@@ -26,7 +23,6 @@ function listenToSingleHousing(housingId, callback) {
     });
 }
 
-// ========== إنشاء حجز ==========
 async function createBooking(user, bookingData) {
     const data = {
         userId: user.uid,
@@ -52,7 +48,6 @@ async function createBooking(user, bookingData) {
     return newRef.key;
 }
 
-// ========== استماع لحجوزات المستخدم ==========
 function listenToUserBookings(userId, callback) {
     const bookingsRef = ref(db, "bookings");
     onValue(bookingsRef, (snapshot) => {
@@ -67,7 +62,6 @@ function listenToUserBookings(userId, callback) {
     });
 }
 
-// ========== استماع لآخر حجز للمستخدم ==========
 function listenToLatestBooking(userId, callback) {
     const bookingsRef = ref(db, "bookings");
     onValue(bookingsRef, (snapshot) => {
@@ -81,7 +75,6 @@ function listenToLatestBooking(userId, callback) {
     });
 }
 
-// ========== المفضلة ==========
 async function toggleFavorite(userId, housingId) {
     const favRef = ref(db, `favorites/${userId}/${housingId}`);
     const snapshot = await get(favRef);
@@ -94,7 +87,6 @@ async function toggleFavorite(userId, housingId) {
     }
 }
 
-// ⭐⭐⭐ هذه الدالة كانت مفقودة — والآن موجودة ⭐⭐⭐
 function listenToFavorites(userId, callback) {
     const favRef = ref(db, `favorites/${userId}`);
     onValue(favRef, (snapshot) => {
@@ -103,7 +95,6 @@ function listenToFavorites(userId, callback) {
     });
 }
 
-// ========== الأقسام ==========
 function listenToSections(callback) {
     const sectionsRef = ref(db, "sections");
     onValue(sectionsRef, (snapshot) => {
@@ -113,7 +104,6 @@ function listenToSections(callback) {
     });
 }
 
-// ========== تحديث حالة السرير ==========
 async function updateBedStatus(housingId, bedId, status) {
     const bedRef = ref(db, `housings/${housingId}/beds`);
     const snapshot = await get(bedRef);
@@ -124,7 +114,6 @@ async function updateBedStatus(housingId, bedId, status) {
     }
 }
 
-// ========== التصدير ⭐⭐⭐ تأكد من وجود كل الأسماء ⭐⭐⭐
 export { 
     listenToHousings, 
     listenToSingleHousing, 
