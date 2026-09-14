@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>عرض المزيد | SAKANI-X</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        * { font-family: 'Tajawal', sans-serif; }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+        .toast-success { background: #10b981; color: #fff; }
+        .toast-error { background: #ef4444; color: #fff; }
+        .toast-info { background: #0f172a; color: #fff; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 pb-24">
+
+    <header class="sticky top-0 z-50 bg-white/85 backdrop-blur-xl border-b border-slate-200 px-5 py-3.5 flex items-center gap-4">
+        <a href="index.html" class="text-slate-900 text-xl">
+            <i class="fa-solid fa-arrow-right"></i>
+        </a>
+        <h1 id="pageTitle" class="text-lg font-extrabold text-slate-900">عرض المزيد</h1>
+    </header>
+
+    <div class="px-5 pt-4">
+        <div class="bg-white border border-slate-200 rounded-2xl px-4 py-3 flex items-center gap-3 shadow-sm focus-within:border-amber-500 focus-within:ring-4 focus-within:ring-amber-500/10 transition-all">
+            <i class="fa-solid fa-magnifying-glass text-slate-400"></i>
+            <input type="text" id="searchInput" placeholder="ابحث في هذا القسم..." oninput="filterViewMore()" class="w-full border-none outline-none text-sm bg-transparent" />
+        </div>
+    </div>
+
+    <div class="flex gap-2 overflow-x-auto px-5 py-3 scrollbar-hide">
+        <button class="chip bg-slate-900 text-white border border-slate-900 px-5 py-2 rounded-full text-sm font-bold whitespace-nowrap transition-all" onclick="setViewMoreFilter('all', this)">الكل</button>
+        <button class="chip bg-white text-slate-500 border border-slate-200 px-5 py-2 rounded-full text-sm font-bold whitespace-nowrap transition-all" onclick="setViewMoreFilter('girls', this)"><i class="fa-solid fa-person-dress"></i> طالبات</button>
+        <button class="chip bg-white text-slate-500 border border-slate-200 px-5 py-2 rounded-full text-sm font-bold whitespace-nowrap transition-all" onclick="setViewMoreFilter('boys', this)"><i class="fa-solid fa-person"></i> طلاب</button>
+    </div>
+
+    <main class="px-5 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5" id="viewMoreContainer">
+        <div class="text-center py-16 text-slate-400 col-span-full">
+            <i class="fa-solid fa-spinner fa-spin text-3xl"></i>
+            <p class="mt-3 text-sm">جاري تحميل الوحدات...</p>
+        </div>
+    </main>
+
+    <nav class="fixed bottom-0 left-0 right-0 h-[68px] bg-white/92 backdrop-blur-xl shadow-[0_-4px_25px_rgba(0,0,0,0.08)] flex justify-around items-center z-[1000] rounded-t-3xl border-t border-slate-200/60">
+        <a href="index.html" class="flex flex-col items-center text-slate-400 text-[11px] font-bold gap-1 w-1/4">
+            <i class="fa-solid fa-house text-xl"></i>
+            <span>الرئيسية</span>
+        </a>
+        <a href="bookings.html" class="flex flex-col items-center text-slate-400 text-[11px] font-bold gap-1 w-1/4">
+            <i class="fa-solid fa-calendar-check text-xl"></i>
+            <span>حجوزاتي</span>
+        </a>
+        <a href="profile.html" class="flex flex-col items-center text-slate-400 text-[11px] font-bold gap-1 w-1/4">
+            <i class="fa-solid fa-user text-xl"></i>
+            <span>حسابي</span>
+        </a>
+    </nav>
+
+    <script type="module" src="view-more.js"></script>
+</body>
+</html>
