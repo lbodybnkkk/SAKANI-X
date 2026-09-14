@@ -3,232 +3,183 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SAKANI X | لوحة إدارة CMD</title>
+    <title>SAKANI X | لوحة الإدارة</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="admin.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        * { font-family: 'Cairo', sans-serif; }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+        body { background: #0a0f1a; color: #f8fafc; }
+        .glass { background: rgba(30, 41, 59, 0.6); backdrop-filter: blur(12px); border: 1px solid rgba(51, 65, 85, 0.5); }
+        .toast-success { background: #10b981; color: #fff; }
+        .toast-error { background: #ef4444; color: #fff; }
+        .toast-info { background: #6366f1; color: #fff; }
+    </style>
 </head>
-<body>
+<body class="min-h-screen flex">
 
-    <aside class="sidebar">
-        <div class="brand">
-            <i class="fa-solid fa-building-shield brand-icon"></i>
-            <h2>SAKANI <span>X</span></h2>
+    <aside class="hidden md:flex flex-col w-64 bg-[#0b0f19] border-l border-slate-800 p-6 gap-8 fixed right-0 top-0 h-full z-40">
+        <div class="flex items-center gap-3">
+            <i class="fa-solid fa-building-shield text-2xl text-indigo-500"></i>
+            <h2 class="text-xl font-extrabold">SAKANI <span class="text-indigo-500">X</span></h2>
         </div>
-        <nav class="menu">
-            <button class="nav-btn active" data-tab="dashboard">
-                <i class="fa-solid fa-chart-pie"></i> الإحصائيات
-            </button>
-            <button class="nav-btn" data-tab="add-housing">
-                <i class="fa-solid fa-plus-circle"></i> إضافة سكن جديد
-            </button>
-            <button class="nav-btn" data-tab="manage-housing">
-                <i class="fa-solid fa-list-check"></i> إدارة السكنات
-            </button>
-            <button class="nav-btn" data-tab="bookings">
-                <i class="fa-solid fa-calendar-check"></i> طلبات الحجز
-            </button>
-            <button class="nav-btn" data-tab="sections">
-                <i class="fa-solid fa-layer-group"></i> الأقسام
-            </button>
+        <nav class="flex flex-col gap-1.5 flex-1">
+            <button class="nav-btn active flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-slate-400 hover:bg-indigo-600 hover:text-white transition-all text-right" data-tab="dashboard"><i class="fa-solid fa-chart-pie w-5"></i> الإحصائيات</button>
+            <button class="nav-btn flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-slate-400 hover:bg-indigo-600 hover:text-white transition-all text-right" data-tab="add-housing"><i class="fa-solid fa-plus-circle w-5"></i> إضافة سكن</button>
+            <button class="nav-btn flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-slate-400 hover:bg-indigo-600 hover:text-white transition-all text-right" data-tab="manage-housing"><i class="fa-solid fa-list-check w-5"></i> إدارة السكنات</button>
+            <button class="nav-btn flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-slate-400 hover:bg-indigo-600 hover:text-white transition-all text-right" data-tab="bookings"><i class="fa-solid fa-calendar-check w-5"></i> طلبات الحجز</button>
+            <button class="nav-btn flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-slate-400 hover:bg-indigo-600 hover:text-white transition-all text-right" data-tab="sections"><i class="fa-solid fa-layer-group w-5"></i> الأقسام</button>
+            <button class="nav-btn flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-slate-400 hover:bg-indigo-600 hover:text-white transition-all text-right" data-tab="owner-ledger"><i class="fa-solid fa-address-book w-5"></i> سجل الملاك</button>
         </nav>
+        <div class="text-xs text-slate-600 text-center border-t border-slate-800 pt-4">
+            <p>تطوير <span class="text-indigo-400 font-bold">CMD</span></p>
+        </div>
     </aside>
 
-    <main class="content">
-        <header class="top-bar">
-            <h1>لوحة التحكم الرئيسية</h1>
-            <div class="status-badge"><i class="fa-solid fa-circle"></i> النظام متصل بـ Firebase</div>
+    <main class="flex-1 p-5 md:p-8 md:mr-64 overflow-y-auto">
+        <header class="flex justify-between items-center mb-8 pb-4 border-b border-slate-800">
+            <h1 class="text-xl md:text-2xl font-extrabold">لوحة التحكم</h1>
+            <div class="flex items-center gap-2 text-xs text-emerald-400 bg-emerald-500/10 px-4 py-2 rounded-full">
+                <i class="fa-solid fa-circle"></i> متصل بـ Firebase
+            </div>
         </header>
 
-        <!-- Dashboard -->
         <section id="dashboard" class="tab-content active">
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-icon purple"><i class="fa-solid fa-house"></i></div>
-                    <div class="stat-info"><h3 id="stat-total-housing">0</h3><p>إجمالي الوحدات</p></div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                <div class="glass rounded-2xl p-6 flex items-center gap-4">
+                    <div class="w-14 h-14 rounded-xl bg-indigo-500/20 flex items-center justify-center text-indigo-400 text-2xl"><i class="fa-solid fa-house"></i></div>
+                    <div><h3 class="text-2xl font-extrabold" id="stat-total-housing">0</h3><p class="text-sm text-slate-400">إجمالي الوحدات</p></div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-icon gold"><i class="fa-solid fa-clock"></i></div>
-                    <div class="stat-info"><h3 id="stat-pending-bookings">0</h3><p>حجوزات معلقة</p></div>
+                <div class="glass rounded-2xl p-6 flex items-center gap-4">
+                    <div class="w-14 h-14 rounded-xl bg-amber-500/20 flex items-center justify-center text-amber-400 text-2xl"><i class="fa-solid fa-clock"></i></div>
+                    <div><h3 class="text-2xl font-extrabold" id="stat-pending-bookings">0</h3><p class="text-sm text-slate-400">حجوزات معلقة</p></div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-icon green"><i class="fa-solid fa-circle-check"></i></div>
-                    <div class="stat-info"><h3 id="stat-approved-bookings">0</h3><p>حجوزات مقبولة</p></div>
+                <div class="glass rounded-2xl p-6 flex items-center gap-4">
+                    <div class="w-14 h-14 rounded-xl bg-emerald-500/20 flex items-center justify-center text-emerald-400 text-2xl"><i class="fa-solid fa-circle-check"></i></div>
+                    <div><h3 class="text-2xl font-extrabold" id="stat-approved-bookings">0</h3><p class="text-sm text-slate-400">حجوزات مقبولة</p></div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-icon red"><i class="fa-solid fa-bed"></i></div>
-                    <div class="stat-info"><h3 id="stat-total-beds">0</h3><p>إجمالي الأسرّة</p></div>
+                <div class="glass rounded-2xl p-6 flex items-center gap-4">
+                    <div class="w-14 h-14 rounded-xl bg-rose-500/20 flex items-center justify-center text-rose-400 text-2xl"><i class="fa-solid fa-bed"></i></div>
+                    <div><h3 class="text-2xl font-extrabold" id="stat-total-beds">0</h3><p class="text-sm text-slate-400">إجمالي الأسرّة</p></div>
                 </div>
             </div>
         </section>
 
-        <!-- Add/Edit Housing -->
-        <section id="add-housing" class="tab-content">
-            <div class="form-container">
-                <h2 id="form-title">إضافة وحدة سكنية جديدة</h2>
+        <section id="add-housing" class="tab-content hidden">
+            <div class="glass rounded-2xl p-6 max-w-4xl">
+                <h2 id="form-title" class="text-lg font-extrabold mb-6">إضافة وحدة سكنية جديدة</h2>
                 <form id="housing-form">
                     <input type="hidden" id="housing-id">
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label>عنوان الإعلان</label>
-                            <input type="text" id="title" placeholder="مثال: شقة مفروشة فاخرة بجوار الجامعة" required>
-                        </div>
-                        <div class="form-group">
-                            <label>المحافظة / المدينة</label>
-                            <input type="text" id="city" placeholder="مثال: المنيا" required>
-                        </div>
-                        <div class="form-group">
-                            <label>العنوان بالتفصيل</label>
-                            <input type="text" id="address" placeholder="اسم الشارع - الميدان" required>
-                        </div>
-                        <div class="form-group">
-                            <label>نوع السكن</label>
-                            <select id="type" required>
-                                <option value="شقة كاملة">شقة كاملة</option>
-                                <option value="غرفة خاصة">غرفة خاصة</option>
-                                <option value="سرير في غرفة مشتركة">سرير في غرفة مشتركة</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>الفئة المخصصة</label>
-                            <select id="gender" required>
-                                <option value="طلاب (شباب)">طلاب (شباب)</option>
-                                <option value="طالبات (بنات)">طالبات (بنات)</option>
-                                <option value="عائلات / موظفين">عائلات / موظفين</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>القسم</label>
-                            <select id="section">
-                                <option value="">بدون قسم</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>الإيجار الشهري (EGP)</label>
-                            <input type="number" id="price" placeholder="1500" required>
-                        </div>
-                        <div class="form-group">
-                            <label>مبلغ التأمين (EGP)</label>
-                            <input type="number" id="deposit" placeholder="1000" required>
-                        </div>
-                        <div class="form-group">
-                            <label>رقم هاتف التواصل</label>
-                            <input type="tel" id="phone" placeholder="010XXXXXXXX" required>
-                        </div>
-                        <div class="form-group">
-                            <label>اسم مالك السكن</label>
-                            <input type="text" id="ownerName" placeholder="مثال: أحمد محمد">
-                        </div>
-                        <div class="form-group">
-                            <label>عدد الغرف</label>
-                            <input type="number" id="roomsCount" placeholder="3" min="1">
-                        </div>
-                        <div class="form-group">
-                            <label>عدد الأسرّة لكل غرفة</label>
-                            <input type="number" id="bedsPerRoom" placeholder="2" min="1">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div class="flex flex-col gap-1.5"><label class="text-sm font-semibold text-slate-400">عنوان الإعلان</label><input type="text" id="title" class="bg-[#0f172a] border border-slate-700 rounded-xl px-4 py-3 text-sm outline-none focus:border-indigo-500 transition-all" placeholder="مثال: شقة مفروشة فاخرة" required></div>
+                        <div class="flex flex-col gap-1.5"><label class="text-sm font-semibold text-slate-400">المحافظة / المدينة</label><input type="text" id="city" class="bg-[#0f172a] border border-slate-700 rounded-xl px-4 py-3 text-sm outline-none focus:border-indigo-500 transition-all" placeholder="مثال: المنيا" required></div>
+                        <div class="flex flex-col gap-1.5"><label class="text-sm font-semibold text-slate-400">العنوان بالتفصيل</label><input type="text" id="address" class="bg-[#0f172a] border border-slate-700 rounded-xl px-4 py-3 text-sm outline-none focus:border-indigo-500 transition-all" placeholder="اسم الشارع - الميدان" required></div>
+                        <div class="flex flex-col gap-1.5"><label class="text-sm font-semibold text-slate-400">نوع السكن</label><select id="type" class="bg-[#0f172a] border border-slate-700 rounded-xl px-4 py-3 text-sm outline-none focus:border-indigo-500 transition-all" required><option value="شقة كاملة">شقة كاملة</option><option value="غرفة خاصة">غرفة خاصة</option><option value="سرير في غرفة مشتركة">سرير في غرفة مشتركة</option></select></div>
+                        <div class="flex flex-col gap-1.5"><label class="text-sm font-semibold text-slate-400">الفئة المخصصة</label><select id="gender" class="bg-[#0f172a] border border-slate-700 rounded-xl px-4 py-3 text-sm outline-none focus:border-indigo-500 transition-all" required><option value="طلاب (شباب)">طلاب (شباب)</option><option value="طالبات (بنات)">طالبات (بنات)</option><option value="عائلات / موظفين">عائلات / موظفين</option></select></div>
+                        <div class="flex flex-col gap-1.5"><label class="text-sm font-semibold text-slate-400">القسم</label><select id="section" class="bg-[#0f172a] border border-slate-700 rounded-xl px-4 py-3 text-sm outline-none focus:border-indigo-500 transition-all"><option value="">بدون قسم</option></select></div>
+                        <div class="flex flex-col gap-1.5"><label class="text-sm font-semibold text-slate-400">الإيجار الشهري (ج.م)</label><input type="number" id="price" class="bg-[#0f172a] border border-slate-700 rounded-xl px-4 py-3 text-sm outline-none focus:border-indigo-500 transition-all" placeholder="1500" required></div>
+                        <div class="flex flex-col gap-1.5"><label class="text-sm font-semibold text-slate-400">مبلغ التأمين (ج.م)</label><input type="number" id="deposit" class="bg-[#0f172a] border border-slate-700 rounded-xl px-4 py-3 text-sm outline-none focus:border-indigo-500 transition-all" placeholder="1000" required></div>
+                        <div class="flex flex-col gap-1.5"><label class="text-sm font-semibold text-slate-400">رقم هاتف التواصل</label><input type="tel" id="phone" class="bg-[#0f172a] border border-slate-700 rounded-xl px-4 py-3 text-sm outline-none focus:border-indigo-500 transition-all" placeholder="010XXXXXXXX" required></div>
+                        <div class="flex flex-col gap-1.5"><label class="text-sm font-semibold text-slate-400">اسم مالك السكن</label><input type="text" id="ownerName" class="bg-[#0f172a] border border-slate-700 rounded-xl px-4 py-3 text-sm outline-none focus:border-indigo-500 transition-all" placeholder="مثال: أحمد محمد"></div>
+                        <div class="flex flex-col gap-1.5"><label class="text-sm font-semibold text-slate-400">عدد الغرف</label><input type="number" id="roomsCount" class="bg-[#0f172a] border border-slate-700 rounded-xl px-4 py-3 text-sm outline-none focus:border-indigo-500 transition-all" placeholder="3" min="1"></div>
+                        <div class="flex flex-col gap-1.5"><label class="text-sm font-semibold text-slate-400">عدد الأسرّة لكل غرفة</label><input type="number" id="bedsPerRoom" class="bg-[#0f172a] border border-slate-700 rounded-xl px-4 py-3 text-sm outline-none focus:border-indigo-500 transition-all" placeholder="2" min="1"></div>
+                    </div>
+                    <div class="mt-5"><label class="text-sm font-semibold text-slate-400 block mb-2">المرافق والخدمات</label>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                            <label class="flex items-center gap-2 text-sm text-slate-300 cursor-pointer"><input type="checkbox" value="إنترنت Wi-Fi" class="amenities-check accent-indigo-500"> إنترنت Wi-Fi</label>
+                            <label class="flex items-center gap-2 text-sm text-slate-300 cursor-pointer"><input type="checkbox" value="تكييف هوائي" class="amenities-check accent-indigo-500"> تكييف هوائي</label>
+                            <label class="flex items-center gap-2 text-sm text-slate-300 cursor-pointer"><input type="checkbox" value="مصعد (أسانسير)" class="amenities-check accent-indigo-500"> مصعد</label>
+                            <label class="flex items-center gap-2 text-sm text-slate-300 cursor-pointer"><input type="checkbox" value="غسالة ملابس" class="amenities-check accent-indigo-500"> غسالة ملابس</label>
+                            <label class="flex items-center gap-2 text-sm text-slate-300 cursor-pointer"><input type="checkbox" value="سخان مياه" class="amenities-check accent-indigo-500"> سخان مياه</label>
+                            <label class="flex items-center gap-2 text-sm text-slate-300 cursor-pointer"><input type="checkbox" value="غاز طبيعي" class="amenities-check accent-indigo-500"> غاز طبيعي</label>
+                            <label class="flex items-center gap-2 text-sm text-slate-300 cursor-pointer"><input type="checkbox" value="خدمة نظافة" class="amenities-check accent-indigo-500"> خدمة نظافة</label>
+                            <label class="flex items-center gap-2 text-sm text-slate-300 cursor-pointer"><input type="checkbox" value="حراسة / أمن" class="amenities-check accent-indigo-500"> حراسة / أمن</label>
                         </div>
                     </div>
-
-                    <div class="form-group full-width">
-                        <label>المرافق والخدمات</label>
-                        <div class="checkbox-grid">
-                            <label><input type="checkbox" value="إنترنت Wi-Fi" class="amenities-check"> إنترنت Wi-Fi</label>
-                            <label><input type="checkbox" value="تكييف هوائي" class="amenities-check"> تكييف هوائي</label>
-                            <label><input type="checkbox" value="مصعد (أسانسير)" class="amenities-check"> مصعد</label>
-                            <label><input type="checkbox" value="غسالة ملابس" class="amenities-check"> غسالة ملابس</label>
-                            <label><input type="checkbox" value="سخان مياه" class="amenities-check"> سخان مياه</label>
-                            <label><input type="checkbox" value="غاز طبيعي" class="amenities-check"> غاز طبيعي</label>
-                            <label><input type="checkbox" value="خدمة نظافة" class="amenities-check"> خدمة نظافة</label>
-                            <label><input type="checkbox" value="حراسة / أمن" class="amenities-check"> حراسة / أمن</label>
-                        </div>
-                    </div>
-
-                    <div class="form-group full-width">
-                        <label>الوصف التفصيلي</label>
-                        <textarea id="description" rows="4" placeholder="اكتب وصفاً شاملاً..." required></textarea>
-                    </div>
-
-                    <div class="form-group full-width">
-                        <label>صور السكن</label>
-                        <input type="file" id="image-input" accept="image/*" multiple>
-                        <div id="image-preview" class="image-preview-container"></div>
-                    </div>
-
-                    <div class="form-actions">
-                        <button type="submit" id="save-btn" class="btn-primary">
-                            <i class="fa-solid fa-floppy-disk"></i> حفظ ونشر السكن
-                        </button>
-                        <button type="button" id="cancel-edit-btn" class="btn-secondary hidden">
-                            <i class="fa-solid fa-xmark"></i> إلغاء التعديل
-                        </button>
+                    <div class="mt-5 flex flex-col gap-1.5"><label class="text-sm font-semibold text-slate-400">الوصف التفصيلي</label><textarea id="description" rows="4" class="bg-[#0f172a] border border-slate-700 rounded-xl px-4 py-3 text-sm outline-none focus:border-indigo-500 transition-all resize-none" placeholder="اكتب وصفاً شاملاً..." required></textarea></div>
+                    <div class="mt-5 flex flex-col gap-1.5"><label class="text-sm font-semibold text-slate-400">صور السكن</label><input type="file" id="image-input" accept="image/*" multiple class="text-sm text-slate-400 file:mr-4 file:py-2.5 file:px-5 file:rounded-xl file:border-0 file:text-sm file:font-bold file:bg-indigo-600 file:text-white hover:file:bg-indigo-500 file:transition-all"><div id="image-preview" class="flex gap-3 flex-wrap mt-3"></div></div>
+                    <div class="flex gap-3 mt-6">
+                        <button type="submit" id="save-btn" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-6 py-3 rounded-xl transition-all"><i class="fa-solid fa-floppy-disk"></i> حفظ ونشر السكن</button>
+                        <button type="button" id="cancel-edit-btn" class="bg-slate-700 hover:bg-slate-600 text-white font-bold px-6 py-3 rounded-xl transition-all hidden"><i class="fa-solid fa-xmark"></i> إلغاء</button>
                     </div>
                 </form>
             </div>
         </section>
 
-        <!-- Manage Housing -->
-        <section id="manage-housing" class="tab-content">
-            <div class="table-container">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>الصورة</th><th>العنوان</th><th>المدينة</th>
-                            <th>النوع</th><th>الإيجار</th><th>الأسرّة</th><th>الإجراءات</th>
-                        </tr>
-                    </thead>
-                    <tbody id="housing-table-body"></tbody>
-                </table>
+        <section id="manage-housing" class="tab-content hidden">
+            <div class="glass rounded-2xl overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-right">
+                        <thead class="bg-[#182234] text-slate-400 text-sm">
+                            <tr><th class="p-4">الصورة</th><th class="p-4">العنوان</th><th class="p-4">المدينة</th><th class="p-4">النوع</th><th class="p-4">الإيجار</th><th class="p-4">الأسرّة</th><th class="p-4">الإجراءات</th></tr>
+                        </thead>
+                        <tbody id="housing-table-body" class="text-sm"></tbody>
+                    </table>
+                </div>
             </div>
         </section>
 
-        <!-- Bookings -->
-        <section id="bookings" class="tab-content">
-            <div class="table-container">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>المتقدم</th><th>الهاتف</th><th>المحافظة</th>
-                            <th>السكن</th><th>من - إلى</th><th>ملاحظات</th>
-                            <th>الحالة</th><th>التحكم</th>
-                        </tr>
-                    </thead>
-                    <tbody id="bookings-table-body"></tbody>
-                </table>
+        <section id="bookings" class="tab-content hidden">
+            <div class="glass rounded-2xl overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-right">
+                        <thead class="bg-[#182234] text-slate-400 text-sm">
+                            <tr><th class="p-4">المتقدم</th><th class="p-4">الهاتف</th><th class="p-4">المحافظة</th><th class="p-4">السكن</th><th class="p-4">من - إلى</th><th class="p-4">الحالة</th><th class="p-4">التحكم</th></tr>
+                        </thead>
+                        <tbody id="bookings-table-body" class="text-sm"></tbody>
+                    </table>
+                </div>
             </div>
         </section>
 
-        <!-- Sections -->
-        <section id="sections" class="tab-content">
-            <div class="form-container" style="margin-bottom: 20px;">
-                <h2>إضافة قسم جديد</h2>
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label>اسم القسم</label>
-                        <input type="text" id="section-name" placeholder="مثال: حي النوادي">
-                    </div>
-                    <div class="form-group">
-                        <label>أيقونة (FontAwesome class)</label>
-                        <input type="text" id="section-icon" placeholder="مثال: fa-city" value="fa-building">
-                    </div>
+        <section id="sections" class="tab-content hidden">
+            <div class="glass rounded-2xl p-6 mb-6 max-w-2xl">
+                <h2 class="text-lg font-extrabold mb-4">إضافة قسم جديد</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div class="flex flex-col gap-1.5"><label class="text-sm font-semibold text-slate-400">اسم القسم</label><input type="text" id="section-name" class="bg-[#0f172a] border border-slate-700 rounded-xl px-4 py-3 text-sm outline-none focus:border-indigo-500 transition-all" placeholder="مثال: حي النوادي"></div>
+                    <div class="flex flex-col gap-1.5"><label class="text-sm font-semibold text-slate-400">أيقونة (FontAwesome class)</label><input type="text" id="section-icon" class="bg-[#0f172a] border border-slate-700 rounded-xl px-4 py-3 text-sm outline-none focus:border-indigo-500 transition-all" placeholder="fa-city" value="fa-building"></div>
                 </div>
-                <div class="form-actions">
-                    <button class="btn-primary" onclick="addSection()">
-                        <i class="fa-solid fa-plus"></i> إضافة القسم
-                    </button>
+                <button class="mt-4 bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-6 py-3 rounded-xl transition-all" onclick="addSection()"><i class="fa-solid fa-plus"></i> إضافة القسم</button>
+            </div>
+            <div class="glass rounded-2xl overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-right">
+                        <thead class="bg-[#182234] text-slate-400 text-sm"><tr><th class="p-4">القسم</th><th class="p-4">الأيقونة</th><th class="p-4">عدد الوحدات</th><th class="p-4">الإجراءات</th></tr></thead>
+                        <tbody id="sections-table-body" class="text-sm"></tbody>
+                    </table>
                 </div>
             </div>
-            <div class="table-container">
-                <table>
-                    <thead>
-                        <tr><th>القسم</th><th>الأيقونة</th><th>عدد الوحدات</th><th>الإجراءات</th></tr>
-                    </thead>
-                    <tbody id="sections-table-body"></tbody>
-                </table>
+        </section>
+
+        <section id="owner-ledger" class="tab-content hidden">
+            <div class="glass rounded-2xl p-6 mb-6">
+                <h2 class="text-lg font-extrabold mb-2"><i class="fa-solid fa-address-book text-indigo-400"></i> سجل إدارة الملاك</h2>
+                <p class="text-sm text-slate-400">سجل خاص بالأدمن فقط - الوحدات المرتبة حسب الحالة</p>
             </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" id="ownerLedgerContainer"></div>
         </section>
     </main>
 
+    <nav class="fixed bottom-0 left-0 right-0 h-16 bg-[#0b0f19] border-t border-slate-800 flex md:hidden justify-around items-center z-50">
+        <button class="nav-btn active flex flex-col items-center text-indigo-400 text-[10px] font-bold gap-1" data-tab="dashboard"><i class="fa-solid fa-chart-pie text-lg"></i> الإحصائيات</button>
+        <button class="nav-btn flex flex-col items-center text-slate-500 text-[10px] font-bold gap-1" data-tab="add-housing"><i class="fa-solid fa-plus-circle text-lg"></i> إضافة</button>
+        <button class="nav-btn flex flex-col items-center text-slate-500 text-[10px] font-bold gap-1" data-tab="manage-housing"><i class="fa-solid fa-list-check text-lg"></i> السكنات</button>
+        <button class="nav-btn flex flex-col items-center text-slate-500 text-[10px] font-bold gap-1" data-tab="bookings"><i class="fa-solid fa-calendar-check text-lg"></i> الحجوزات</button>
+        <button class="nav-btn flex flex-col items-center text-slate-500 text-[10px] font-bold gap-1" data-tab="owner-ledger"><i class="fa-solid fa-address-book text-lg"></i> الملاك</button>
+    </nav>
+
+    <div id="ownerDetailModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-[2000] hidden items-center justify-center p-4">
+        <div class="glass rounded-2xl p-6 max-w-lg w-full max-h-[85vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-5">
+                <h3 class="text-lg font-extrabold" id="ownerModalTitle">تفاصيل الوحدة</h3>
+                <button onclick="closeOwnerModal()" class="text-slate-400 hover:text-white text-xl"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div id="ownerModalContent"></div>
+        </div>
+    </div>
+
     <script type="module" src="admin.js"></script>
-    
 </body>
 </html>
