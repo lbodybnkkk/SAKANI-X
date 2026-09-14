@@ -44,19 +44,23 @@
             <label class="form-label">رقم الهاتف *</label>
             <input type="tel" id="pfPhone" class="input-field" placeholder="010XXXXXXXX" maxlength="11" inputmode="numeric">
 
-            <label class="form-label">المحافظة *</label>
-            <select id="pfGovernorate" class="input-field">
-                <option value="">اختر المحافظة...</option>
-                <option>القاهرة</option><option>الجيزة</option><option>الإسكندرية</option>
-                <option>الدقهلية</option><option>الشرقية</option><option>القليوبية</option>
-                <option>المنوفية</option><option>الغربية</option><option>كفر الشيخ</option>
-                <option>دمياط</option><option>بورسعيد</option><option>الإسماعيلية</option>
-                <option>السويس</option><option>شمال سيناء</option><option>جنوب سيناء</option>
-                <option>الفيوم</option><option>بني سويف</option><option>المنيا</option>
-                <option>أسيوط</option><option>سوهاج</option><option>قنا</option>
-                <option>الأقصر</option><option>أسوان</option><option>البحر الأحمر</option>
-                <option>الوادي الجديد</option><option>مطروح</option>
-            </select>
+            <div class="relative">
+    <label class="form-label">المحافظة *</label>
+    <button type="button" id="governorateBtn" onclick="toggleGovernorateDropdown()" 
+            class="w-full h-12 rounded-xl border border-slate-200 px-4 text-sm text-right bg-white flex items-center justify-between">
+        <span id="selectedGovernorate" class="text-slate-400">اختر المحافظة...</span>
+        <i class="fa-solid fa-chevron-down text-slate-400 text-xs"></i>
+    </button>
+    <div id="governorateDropdown" 
+         class="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-2xl hidden max-h-60 overflow-y-auto">
+        <div class="p-2">
+            <input type="text" id="govSearch" placeholder="ابحث..." 
+                   class="w-full h-10 rounded-lg border border-slate-200 px-3 text-sm mb-2" 
+                   oninput="filterGovernorates()">
+        </div>
+        <div id="governorateList" class="pb-2"></div>
+    </div>
+</div>
 
             <label class="form-label">المدينة / المركز (اختياري)</label>
             <input type="text" id="pfCity" class="input-field" placeholder="مثال: المنيا الجديدة">
