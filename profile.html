@@ -46,19 +46,25 @@
 
             <div class="relative">
     <label class="form-label">المحافظة *</label>
-    <button type="button" id="governorateBtn" onclick="toggleGovernorateDropdown()" 
-            class="w-full h-12 rounded-xl border border-slate-200 px-4 text-sm text-right bg-white flex items-center justify-between">
+    <button type="button" id="governorateBtn" onclick="toggleGovernorateDropdown(event)" 
+            class="w-full h-12 rounded-xl border border-slate-200 px-4 text-sm text-right bg-white flex items-center justify-between hover:border-amber-500 transition-all">
         <span id="selectedGovernorate" class="text-slate-400">اختر المحافظة...</span>
-        <i class="fa-solid fa-chevron-down text-slate-400 text-xs"></i>
+        <i class="fa-solid fa-chevron-down text-slate-400 text-xs transition-transform" id="govChevron"></i>
     </button>
+    <input type="hidden" id="pfGovernorate">
+                
     <div id="governorateDropdown" 
-         class="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-2xl hidden max-h-60 overflow-y-auto">
-        <div class="p-2">
-            <input type="text" id="govSearch" placeholder="ابحث..." 
-                   class="w-full h-10 rounded-lg border border-slate-200 px-3 text-sm mb-2" 
-                   oninput="filterGovernorates()">
+         class="absolute z-50 top-full mt-2 right-0 left-0 bg-white rounded-2xl shadow-2xl border border-slate-100 hidden overflow-hidden"
+         style="max-height: 320px;">
+        <div class="p-3 border-b border-slate-100">
+            <div class="relative">
+                <i class="fa-solid fa-magnifying-glass absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                <input type="text" id="govSearch" placeholder="ابحث..." 
+                       class="w-full h-10 rounded-xl border border-slate-200 pr-9 pl-3 text-sm outline-none focus:border-amber-500"
+                       oninput="filterGovernorates()">
+            </div>
         </div>
-        <div id="governorateList" class="pb-2"></div>
+        <div id="governorateList" class="overflow-y-auto py-2" style="max-height: 240px;"></div>
     </div>
 </div>
 
@@ -82,7 +88,7 @@
         <div class="bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl p-6 mt-6 text-white">
     <div class="flex items-center gap-4 mb-4">
         <div class="w-14 h-14 rounded-full bg-amber-500 flex items-center justify-center text-2xl font-extrabold text-slate-900">
-            CMD
+            
         </div>
         <div>
             <h3 class="text-lg font-extrabold">المطور CMD</h3>
