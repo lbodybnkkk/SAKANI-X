@@ -65,17 +65,25 @@ onAuthStateChanged(auth, async (user) => {
 });
 
 function updateAuthUI(isLoggedIn, user) {
-    const authBtn = document.getElementById("authTriggerBtn");
-    if (!authBtn) return;
-    
-    if (isLoggedIn && user) {
-        authBtn.innerHTML = user.photoURL 
-            ? `<img src="${user.photoURL}" alt="${user.displayName || 'User'}" class="w-full h-full object-cover rounded-full">`
-            : `<i class="fa-solid fa-user text-slate-900"></i>`;
-        authBtn.onclick = () => window.location.href = "profile.html";
+    const updateButton = () => {
+        const authBtn = document.getElementById("authTriggerBtn");
+        if (!authBtn) return;
+
+        if (isLoggedIn && user) {
+            authBtn.innerHTML = user.photoURL 
+                ? `<img src="${user.photoURL}" alt="${user.displayName || 'User'}" class="w-full h-full object-cover rounded-full">`
+                : `<i class="fa-solid fa-user text-slate-900"></i>`;
+            authBtn.onclick = () => window.location.href = "profile.html";
+        } else {
+            authBtn.innerHTML = `<i class="fa-solid fa-user text-slate-900"></i>`;
+            authBtn.onclick = () => window.toggleAuthModal(true);
+        }
+    };
+
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", updateButton);
     } else {
-        authBtn.innerHTML = `<i class="fa-solid fa-user text-slate-900"></i>`;
-        authBtn.onclick = () => window.toggleAuthModal(true);
+        updateButton();
     }
 }
 
