@@ -87,29 +87,48 @@ const governorates = [
 
 function renderGovernorates(filter = "") {
     const list = document.getElementById("governorateList");
+    if (!list) return;
     const filtered = governorates.filter(g => g.includes(filter));
+    
+    if (filtered.length === 0) {
+        list.innerHTML = `<div class="text-center py-4 text-slate-400 text-sm">لا نتائج</div>`;
+        return;
+    }
+
     list.innerHTML = filtered.map(g => `
         <button type="button" onclick="selectGovernorate('${g}')" 
-                class="w-full text-right px-4 py-2.5 text-sm hover:bg-amber-50 transition-all">
-            ${g}
+                class="w-full text-right px-4 py-2.5 text-sm hover:bg-amber-50 transition-all flex items-center justify-between group">
+            <span>${g}</span>
+            <i class="fa-solid fa-check text-amber-500 opacity-0 group-hover:opacity-100 transition-opacity text-xs"></i>
         </button>
     `).join('');
 }
 
-function toggleGovernorateDropdown() {
+function toggleGovernorateDropdown(e) {
+    if (e) e.stopPropagation();
     const dd = document.getElementById("governorateDropdown");
-    dd.classList.toggle("hidden");
-    if (!dd.classList.contains("hidden")) {
+    const chev = document.getElementById("govChevron");
+    const isHidden = dd.classList.contains("hidden");
+    
+    if (isHidden) {
+        dd.classList.remove("hidden");
+        chev.style.transform = "rotate(180deg)";
         renderGovernorates();
-        document.getElementById("govSearch").focus();
+        setTimeout(() => document.getElementById("govSearch").focus(), 100);
+    } else {
+        dd.classList.add("hidden");
+        chev.style.transform = "rotate(0deg)";
     }
 }
 
 function selectGovernorate(gov) {
-    document.getElementById("selectedGovernorate").innerText = gov;
-    document.getElementById("selectedGovernorate").classList.remove("text-slate-400");
+    const selected = document.getElementById("selectedGovernorate");
+    selected.innerText = gov;
+    selected.classList.remove("text-slate-400");
+    selected.classList.add("text-slate-900", "font-bold");
     document.getElementById("pfGovernorate").value = gov;
     document.getElementById("governorateDropdown").classList.add("hidden");
+    document.getElementById("govChevron").style.transform = "rotate(0deg)";
 }
 
 function filterGovernorates() {
@@ -120,8 +139,10 @@ function filterGovernorates() {
 document.addEventListener("click", (e) => {
     const dropdown = document.getElementById("governorateDropdown");
     const btn = document.getElementById("governorateBtn");
-    if (dropdown && !dropdown.contains(e.target) && !btn.contains(e.target)) {
+    if (dropdown && btn && !dropdown.contains(e.target) && !btn.contains(e.target)) {
         dropdown.classList.add("hidden");
+        const chev = document.getElementById("govChevron");
+        if (chev) chev.style.transform = "rotate(0deg)";
     }
 });
 
