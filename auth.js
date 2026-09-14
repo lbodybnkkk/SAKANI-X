@@ -1,4 +1,3 @@
-// auth.js
 import { 
     auth, googleProvider, facebookProvider,
     signInWithPopup, signOut, onAuthStateChanged,
@@ -11,29 +10,27 @@ let currentUser = null;
 let userProfile = null;
 let authCallbacks = [];
 
-// ========== ترجمة أخطاء Firebase للعربي ==========
 function translateAuthError(error) {
     const code = error.code || "";
     const map = {
-        "auth/invalid-credential": "❌ البريد الإلكتروني أو كلمة المرور غير صحيحة. لو حسابك جديد، اضغط على 'حساب جديد' الأول.",
-        "auth/user-not-found": "❌ لا يوجد حساب بهذا البريد. اضغط على 'حساب جديد' لإنشائه.",
-        "auth/wrong-password": "❌ كلمة المرور غير صحيحة. جرّب مرة أخرى أو اضغط 'نسيت كلمة المرور'.",
-        "auth/invalid-email": "❌ صيغة البريد الإلكتروني غير صحيحة.",
-        "auth/email-already-in-use": "⚠️ هذا البريد مستخدم بالفعل. جرّب تسجيل الدخول بدلاً من إنشاء حساب.",
-        "auth/weak-password": "🔒 كلمة المرور ضعيفة جداً (6 أحرف على الأقل).",
-        "auth/too-many-requests": "⏳ محاولات كثيرة فاشلة. انتظر دقيقة وحاول مجدداً.",
-        "auth/popup-closed-by-user": "🚪 تم إغلاق نافذة تسجيل الدخول.",
-        "auth/popup-blocked": "🚫 المتصفح منع النافذة المنبثقة. اسمح بها وأعد المحاولة.",
-        "auth/account-exists-with-different-credential": "⚠️ البريد مسجل بطريقة تسجيل أخرى. جرّب Google أو Facebook.",
-        "auth/network-request-failed": "📡 فشل الاتصال بالإنترنت. تحقق من الشبكة.",
-        "auth/cancelled-popup-request": "❌ تم إلغاء العملية.",
-        "auth/operation-not-allowed": "⚙️ هذه الطريقة غير مفعّلة. راجع إعدادات Firebase.",
-        "auth/unauthorized-domain": "🌐 النطاق الحالي غير مصرح به في Firebase."
+        "auth/invalid-credential": "البريد الإلكتروني أو كلمة المرور غير صحيحة.",
+        "auth/user-not-found": "لا يوجد حساب بهذا البريد. أنشئ حسابًا جديدًا.",
+        "auth/wrong-password": "كلمة المرور غير صحيحة.",
+        "auth/invalid-email": "صيغة البريد الإلكتروني غير صحيحة.",
+        "auth/email-already-in-use": "هذا البريد مستخدم بالفعل.",
+        "auth/weak-password": "كلمة المرور يجب أن تكون 6 أحرف على الأقل.",
+        "auth/too-many-requests": "محاولات كثيرة فاشلة. انتظر دقيقة.",
+        "auth/popup-closed-by-user": "تم إغلاق نافذة تسجيل الدخول.",
+        "auth/popup-blocked": "المتصفح منع النافذة المنبثقة. اسمح بها.",
+        "auth/account-exists-with-different-credential": "البريد مسجل بطريقة أخرى.",
+        "auth/network-request-failed": "فشل الاتصال بالإنترنت.",
+        "auth/cancelled-popup-request": "تم إلغاء العملية.",
+        "auth/operation-not-allowed": "هذه الطريقة غير مفعّلة.",
+        "auth/unauthorized-domain": "النطاق الحالي غير مصرح به."
     };
-    return map[code] || `⚠️ حدث خطأ: ${error.message}`;
+    return map[code] || `حدث خطأ: ${error.message}`;
 }
 
-// ========== مراقبة حالة المستخدم ==========
 onAuthStateChanged(auth, async (user) => {
     if (user) {
         currentUser = user;
@@ -73,53 +70,50 @@ function updateAuthUI(isLoggedIn, user) {
     
     if (isLoggedIn && user) {
         authBtn.innerHTML = user.photoURL 
-            ? `<img src="${user.photoURL}" alt="${user.displayName || 'User'}" style="width:100%; height:100%; object-fit:cover; border-radius:50%;">`
-            : `<i class="fa-solid fa-user" style="color: var(--primary);"></i>`;
+            ? `<img src="${user.photoURL}" alt="${user.displayName || 'User'}" class="w-full h-full object-cover rounded-full">`
+            : `<i class="fa-solid fa-user text-slate-900"></i>`;
         authBtn.onclick = () => window.location.href = "profile.html";
     } else {
-        authBtn.innerHTML = `<i class="fa-solid fa-user" style="color: var(--primary);"></i>`;
+        authBtn.innerHTML = `<i class="fa-solid fa-user text-slate-900"></i>`;
         authBtn.onclick = () => window.toggleAuthModal(true);
     }
 }
 
-// ========== تسجيل الدخول بـ Google ==========
 async function loginWithGoogle() {
     try {
         showToast("جاري الاتصال بـ Google...", "info");
         await signInWithPopup(auth, googleProvider);
         if (window.closeAuthModal) window.closeAuthModal();
-        showToast("تم تسجيل الدخول بنجاح ✅", "success");
+        showToast("تم تسجيل الدخول بنجاح", "success");
     } catch (error) {
         console.error("Google login error:", error);
         showToast(translateAuthError(error), "error");
     }
 }
 
-// ========== تسجيل الدخول بـ Facebook ==========
 async function loginWithFacebook() {
     try {
         showToast("جاري الاتصال بـ Facebook...", "info");
         await signInWithPopup(auth, facebookProvider);
         if (window.closeAuthModal) window.closeAuthModal();
-        showToast("تم تسجيل الدخول بنجاح ✅", "success");
+        showToast("تم تسجيل الدخول بنجاح", "success");
     } catch (error) {
         console.error("Facebook login error:", error);
         showToast(translateAuthError(error), "error");
     }
 }
 
-// ========== تسجيل/دخول بالبريد ==========
 async function handleEmailAuth(isSignUp) {
     const email = document.getElementById("authEmail")?.value.trim();
     const password = document.getElementById("authPassword")?.value;
     const name = document.getElementById("authName")?.value.trim() || "";
     const submitBtn = document.getElementById("authSubmitBtn");
     
-    if (!email) return showToast("📧 برجاء إدخال البريد الإلكتروني", "error");
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return showToast("📧 صيغة البريد الإلكتروني غير صحيحة", "error");
-    if (!password) return showToast("🔒 برجاء إدخال كلمة المرور", "error");
-    if (password.length < 6) return showToast("🔒 كلمة المرور يجب أن تكون 6 أحرف على الأقل", "error");
-    if (isSignUp && !name) return showToast("👤 برجاء إدخال الاسم الكامل", "error");
+    if (!email) return showToast("برجاء إدخال البريد الإلكتروني", "error");
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return showToast("صيغة البريد غير صحيحة", "error");
+    if (!password) return showToast("برجاء إدخال كلمة المرور", "error");
+    if (password.length < 6) return showToast("كلمة المرور يجب أن تكون 6 أحرف على الأقل", "error");
+    if (isSignUp && !name) return showToast("برجاء إدخال الاسم الكامل", "error");
     
     if (submitBtn) {
         submitBtn.disabled = true;
@@ -130,10 +124,10 @@ async function handleEmailAuth(isSignUp) {
         if (isSignUp) {
             const result = await createUserWithEmailAndPassword(auth, email, password);
             if (name) await updateProfile(result.user, { displayName: name });
-            showToast("🎉 تم إنشاء حسابك بنجاح!", "success");
+            showToast("تم إنشاء حسابك بنجاح", "success");
         } else {
             await signInWithEmailAndPassword(auth, email, password);
-            showToast("✅ تم تسجيل الدخول بنجاح", "success");
+            showToast("تم تسجيل الدخول بنجاح", "success");
         }
         if (window.closeAuthModal) window.closeAuthModal();
     } catch (error) {
@@ -147,30 +141,27 @@ async function handleEmailAuth(isSignUp) {
     }
 }
 
-// ========== نسيت كلمة المرور ==========
 async function resetPassword() {
     const email = document.getElementById("authEmail")?.value.trim();
-    if (!email) return showToast("📧 أدخل بريدك الإلكتروني أولاً", "error");
+    if (!email) return showToast("أدخل بريدك الإلكتروني أولاً", "error");
     try {
         await sendPasswordResetEmail(auth, email);
-        showToast("📧 تم إرسال رابط إعادة التعيين لبريدك", "success");
+        showToast("تم إرسال رابط إعادة التعيين لبريدك", "success");
     } catch (error) {
         showToast(translateAuthError(error), "error");
     }
 }
 
-// ========== تسجيل الخروج ==========
 async function logoutUser() {
     try {
         await signOut(auth);
-        showToast("تم تسجيل الخروج 👋", "info");
+        showToast("تم تسجيل الخروج", "info");
         setTimeout(() => window.location.href = "index.html", 800);
     } catch (error) {
         showToast("فشل تسجيل الخروج", "error");
     }
 }
 
-// ========== التحقق من البروفايل ==========
 async function isProfileComplete() {
     if (!currentUser) return false;
     const snap = await get(ref(db, `users/${currentUser.uid}`));
@@ -179,18 +170,17 @@ async function isProfileComplete() {
     return !!(profile.name && profile.phone && profile.governorate);
 }
 
-// ========== Toast ==========
 function showToast(message, type = "info") {
     const existing = document.querySelector(".toast");
     if (existing) existing.remove();
     
     const toast = document.createElement("div");
-    toast.className = `toast toast-${type}`;
+    toast.className = `toast toast-${type} fixed top-5 left-1/2 -translate-x-1/2 z-[9999] px-6 py-3 rounded-xl text-sm font-bold shadow-2xl transition-all duration-300 opacity-0 translate-y-[-20px]`;
     toast.textContent = message;
     document.body.appendChild(toast);
-    setTimeout(() => toast.classList.add("show"), 50);
+    setTimeout(() => toast.classList.remove("opacity-0", "translate-y-[-20px]"), 50);
     setTimeout(() => {
-        toast.classList.remove("show");
+        toast.classList.add("opacity-0", "translate-y-[-20px]");
         setTimeout(() => toast.remove(), 300);
     }, 3500);
 }
