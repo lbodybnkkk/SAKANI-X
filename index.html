@@ -3,133 +3,139 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>SAKANI-X | منصة CMD للسكن</title>
+    <title>SAKANI-X | المنصة الفاخرة للسكن الطلابي</title>
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
-    <link rel="stylesheet" href="style.css" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { tajawal: ['Tajawal', 'sans-serif'] }
+                }
+            }
+        }
+    </script>
+    <style>
+        * { font-family: 'Tajawal', sans-serif; }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+        .toast-success { background: #10b981; color: #fff; }
+        .toast-error { background: #ef4444; color: #fff; }
+        .toast-info { background: #0f172a; color: #fff; }
+    </style>
 </head>
-<body>
+<body class="bg-slate-50 text-slate-900 pb-24">
 
-    <header class="app-header">
-        <a href="index.html" class="brand-logo">
-            <i class="fa-solid fa-building-shield"></i>
-            <span>SAKANI<span style="color: var(--accent-gold);">X</span></span>
+    <header class="sticky top-0 z-50 bg-white/85 backdrop-blur-xl border-b border-slate-200 px-5 py-3.5 flex items-center justify-between">
+        <a href="index.html" class="flex items-center gap-2.5 font-extrabold text-xl text-slate-900">
+            <i class="fa-solid fa-building-shield text-amber-500 text-2xl"></i>
+            <span>SAKANI<span class="text-amber-500">X</span></span>
         </a>
-        <button class="user-profile-btn" id="authTriggerBtn" onclick="toggleAuthModal(true)">
-            <i class="fa-solid fa-user" style="color: var(--primary);"></i>
+        <button class="w-11 h-11 rounded-full border-2 border-amber-500 bg-slate-100 flex items-center justify-center overflow-hidden" id="authTriggerBtn" onclick="toggleAuthModal(true)">
+            <i class="fa-solid fa-user text-slate-900"></i>
         </button>
     </header>
 
-    <div class="search-container">
-        <div class="search-box">
-            <i class="fa-solid fa-magnifying-glass" style="color: var(--text-muted);"></i>
-            <input type="text" id="searchInput" placeholder="ابحث بالمنطقة، الجامعة، أو باسم السكن..." oninput="filterListings()" />
+    <div class="px-5 pt-4">
+        <div class="bg-white border border-slate-200 rounded-2xl px-4 py-3 flex items-center gap-3 shadow-sm focus-within:border-amber-500 focus-within:ring-4 focus-within:ring-amber-500/10 transition-all">
+            <i class="fa-solid fa-magnifying-glass text-slate-400"></i>
+            <input type="text" id="searchInput" placeholder="ابحث بالمنطقة، الجامعة، أو باسم السكن..." oninput="filterListings()" class="w-full border-none outline-none text-sm bg-transparent" />
         </div>
     </div>
 
-    <div class="filter-chips">
-        <button class="chip active" onclick="setFilter('all', this)">الكل</button>
-        <button class="chip" onclick="setFilter('girls', this)"><i class="fa-solid fa-person-dress"></i> طالبات</button>
-        <button class="chip" onclick="setFilter('boys', this)"><i class="fa-solid fa-person"></i> طلاب</button>
-        <button class="chip" onclick="setFilter('luxury', this)"><i class="fa-solid fa-crown"></i> VIP فاخر</button>
+    <div class="flex gap-2 overflow-x-auto px-5 py-3 scrollbar-hide">
+        <button class="chip bg-slate-900 text-white border border-slate-900 px-5 py-2 rounded-full text-sm font-bold whitespace-nowrap transition-all" onclick="setFilter('all', this)">الكل</button>
+        <button class="chip bg-white text-slate-500 border border-slate-200 px-5 py-2 rounded-full text-sm font-bold whitespace-nowrap transition-all" onclick="setFilter('girls', this)"><i class="fa-solid fa-person-dress"></i> طالبات</button>
+        <button class="chip bg-white text-slate-500 border border-slate-200 px-5 py-2 rounded-full text-sm font-bold whitespace-nowrap transition-all" onclick="setFilter('boys', this)"><i class="fa-solid fa-person"></i> طلاب</button>
+        <button class="chip bg-white text-slate-500 border border-slate-200 px-5 py-2 rounded-full text-sm font-bold whitespace-nowrap transition-all" onclick="setFilter('luxury', this)"><i class="fa-solid fa-crown"></i> VIP فاخر</button>
     </div>
 
-    <!-- الأقسام -->
     <div id="sectionsContainer"></div>
 
-    <!-- الرئيسية -->
-    <main class="listings-grid" id="listingsContainer">
-        <div style="text-align:center; padding:60px 20px; color: var(--text-muted);">
-            <i class="fa-solid fa-spinner fa-spin" style="font-size:32px;"></i>
-            <p style="margin-top:12px;">جاري تحميل الوحدات السكنية...</p>
+    <main class="px-5 flex flex-col gap-5 mt-4" id="listingsContainer">
+        <div class="text-center py-16 text-slate-400">
+            <i class="fa-solid fa-spinner fa-spin text-3xl"></i>
+            <p class="mt-3 text-sm">جاري تحميل الوحدات السكنية...</p>
         </div>
     </main>
 
-    <nav class="bottom-nav">
-        <a href="index.html" class="nav-item active"><i class="fa-solid fa-house"></i><span>الرئيسية</span></a>
-        <a href="#" class="nav-item" id="favoritesNavBtn"><i class="fa-solid fa-heart"></i><span>المفضلة</span></a>
-        <a href="bookings.html" class="nav-item"><i class="fa-solid fa-calendar-check"></i><span>حجوزاتي</span></a>
-        <a href="profile.html" class="nav-item"><i class="fa-solid fa-user"></i><span>حسابي</span></a>
+    <nav class="fixed bottom-0 left-0 right-0 h-[68px] bg-white/92 backdrop-blur-xl shadow-[0_-4px_25px_rgba(0,0,0,0.08)] flex justify-around items-center z-[1000] rounded-t-3xl border-t border-slate-200/60">
+        <a href="index.html" class="flex flex-col items-center text-slate-900 text-[11px] font-bold gap-1 w-1/5">
+            <i class="fa-solid fa-house text-xl text-amber-500 -translate-y-0.5"></i>
+            <span>الرئيسية</span>
+        </a>
+        <a href="#" class="flex flex-col items-center text-slate-400 text-[11px] font-bold gap-1 w-1/5" id="favoritesNavBtn">
+            <i class="fa-solid fa-heart text-xl"></i>
+            <span>المفضلة</span>
+        </a>
+        <a href="bookings.html" class="flex flex-col items-center text-slate-400 text-[11px] font-bold gap-1 w-1/5">
+            <i class="fa-solid fa-calendar-check text-xl"></i>
+            <span>حجوزاتي</span>
+        </a>
+        <a href="profile.html" class="flex flex-col items-center text-slate-400 text-[11px] font-bold gap-1 w-1/5">
+            <i class="fa-solid fa-user text-xl"></i>
+            <span>حسابي</span>
+        </a>
     </nav>
 
-    <!-- Auth Modal -->
-    <div class="modal-overlay" id="authModal">
-        <div class="auth-modal-content">
-            <div class="modal-drag-indicator"></div>
-            
-            <div style="display:flex; gap:0; margin-bottom:24px; background:#f1f5f9; border-radius:12px; padding:4px;">
-                <button id="loginTab" onclick="switchAuthTab('login')" 
-                        style="flex:1; padding:10px; border:none; border-radius:10px; font-weight:700; font-family:inherit; cursor:pointer; background:#fff; color:var(--primary); box-shadow:var(--shadow-sm);">
-                    تسجيل الدخول
-                </button>
-                <button id="signupTab" onclick="switchAuthTab('signup')" 
-                        style="flex:1; padding:10px; border:none; border-radius:10px; font-weight:700; font-family:inherit; cursor:pointer; background:transparent; color:var(--text-muted);">
-                    حساب جديد
-                </button>
+    <div class="fixed inset-0 bg-slate-900/65 backdrop-blur-md z-[2000] hidden items-end justify-center" id="authModal">
+        <div class="bg-white w-full max-w-md rounded-t-3xl p-7 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div class="w-12 h-1 bg-slate-200 rounded-full mx-auto mb-5"></div>
+            <div class="flex gap-0 mb-6 bg-slate-100 rounded-xl p-1">
+                <button id="loginTab" onclick="switchAuthTab('login')" class="flex-1 py-2.5 rounded-lg font-bold text-sm bg-white text-slate-900 shadow-sm transition-all">تسجيل الدخول</button>
+                <button id="signupTab" onclick="switchAuthTab('signup')" class="flex-1 py-2.5 rounded-lg font-bold text-sm text-slate-400 transition-all">حساب جديد</button>
             </div>
-
-            <div class="auth-header">
-                <h3 id="authTitle">مرحباً بعودتك 👋</h3>
-                <p id="authSubtitle">سجّل دخولك لمتابعة حجوزاتك</p>
+            <div class="text-center mb-6">
+                <h3 id="authTitle" class="text-xl font-extrabold text-slate-900">مرحباً بعودتك</h3>
+                <p id="authSubtitle" class="text-sm text-slate-500 mt-1.5">سجّل دخولك لمتابعة حجوزاتك</p>
             </div>
-
-            <div class="social-auth-buttons">
-                <button class="btn-social google-btn" onclick="loginWithGoogle()">
-                    <svg class="social-icon" viewBox="0 0 48 48">
-                        <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"/>
-                        <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"/>
-                        <path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"/>
-                        <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"/>
-                    </svg>
+            <div class="flex flex-col gap-3 mb-5">
+                <button class="w-full h-12 rounded-xl border border-slate-200 bg-white flex items-center justify-center gap-3 text-sm font-bold shadow-sm active:scale-[0.98] transition-all" onclick="loginWithGoogle()">
+                    <svg class="w-5 h-5" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"/><path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"/><path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"/><path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"/></svg>
                     <span>المتابعة بواسطة Google</span>
                 </button>
-                <button class="btn-social facebook-btn" onclick="loginWithFacebook()">
-                    <i class="fa-brands fa-facebook-f" style="font-size: 20px;"></i>
+                <button class="w-full h-12 rounded-xl bg-[#1877f2] text-white flex items-center justify-center gap-3 text-sm font-bold shadow-sm active:scale-[0.98] transition-all" onclick="loginWithFacebook()">
+                    <i class="fa-brands fa-facebook-f text-xl"></i>
                     <span>المتابعة بواسطة Facebook</span>
                 </button>
             </div>
-
-            <div class="auth-divider"><span>أو عبر البريد الإلكتروني</span></div>
-
-            <input type="text" id="authName" class="input-field" placeholder="الاسم الكامل" style="display:none;">
-            <input type="email" id="authEmail" class="input-field" placeholder="البريد الإلكتروني" autocomplete="email">
-            <input type="password" id="authPassword" class="input-field" placeholder="كلمة المرور" autocomplete="current-password">
-            
-            <button id="forgotPasswordBtn" onclick="resetPassword()" 
-                    style="background:transparent; border:none; color:var(--accent-gold); font-family:inherit; font-weight:600; font-size:13px; cursor:pointer; margin-bottom:12px; display:block;">
-                نسيت كلمة المرور؟
-            </button>
-
-            <button id="authSubmitBtn" class="btn-submit-luxury" onclick="handleEmailAuth(false)">
-                دخول
-            </button>
-
-            <button onclick="closeAuthModal()" 
-                    style="width:100%; margin-top:12px; padding:12px; background:transparent; border:none; color:var(--text-muted); font-family:inherit; font-weight:600; cursor:pointer;">
-                إلغاء
-            </button>
+            <div class="flex items-center gap-3 text-slate-400 text-xs my-5">
+                <div class="flex-1 h-px bg-slate-200"></div>
+                <span>أو عبر البريد الإلكتروني</span>
+                <div class="flex-1 h-px bg-slate-200"></div>
+            </div>
+            <input type="text" id="authName" class="w-full h-12 rounded-xl border border-slate-200 px-4 text-sm outline-none focus:border-amber-500 focus:ring-3 focus:ring-amber-500/10 mb-3 hidden" placeholder="الاسم الكامل">
+            <input type="email" id="authEmail" class="w-full h-12 rounded-xl border border-slate-200 px-4 text-sm outline-none focus:border-amber-500 focus:ring-3 focus:ring-amber-500/10 mb-3" placeholder="البريد الإلكتروني" autocomplete="email">
+            <input type="password" id="authPassword" class="w-full h-12 rounded-xl border border-slate-200 px-4 text-sm outline-none focus:border-amber-500 focus:ring-3 focus:ring-amber-500/10 mb-3" placeholder="كلمة المرور" autocomplete="current-password">
+            <button id="forgotPasswordBtn" onclick="resetPassword()" class="text-amber-600 text-xs font-bold mb-4 block text-right w-full">نسيت كلمة المرور؟</button>
+            <button id="authSubmitBtn" class="w-full h-12 bg-gradient-to-br from-slate-900 to-slate-800 text-white font-bold rounded-xl shadow-lg active:scale-[0.98] transition-all" onclick="handleEmailAuth(false)">دخول</button>
+            <button onclick="closeAuthModal()" class="w-full mt-3 py-3 text-slate-400 text-sm font-bold">إلغاء</button>
         </div>
     </div>
 
-    <!-- Support Modal -->
-    <div class="modal-overlay" id="supportModal">
-        <div class="auth-modal-content">
-            <div class="modal-drag-indicator"></div>
-            <div class="auth-header">
-                <h3>مركز الدعم والمساعدة <i class="fa-solid fa-headset" style="color: var(--accent-gold);"></i></h3>
-                <p>فريق خدمة العملاء متواجد على مدار 24 ساعة لخدمتك</p>
+    <div class="fixed inset-0 bg-slate-900/65 backdrop-blur-md z-[2000] hidden items-end justify-center" id="supportModal">
+        <div class="bg-white w-full max-w-md rounded-t-3xl p-7 shadow-2xl">
+            <div class="w-12 h-1 bg-slate-200 rounded-full mx-auto mb-5"></div>
+            <div class="text-center mb-6">
+                <h3 class="text-xl font-extrabold text-slate-900">مركز الدعم والمساعدة <i class="fa-solid fa-headset text-amber-500"></i></h3>
+                <p class="text-sm text-slate-500 mt-1.5">فريق خدمة العملاء متواجد على مدار 24 ساعة</p>
             </div>
-            <div style="display: flex; flex-direction: column; gap: 14px; margin-bottom: 20px;">
-                <a href="https://wa.me/201000000000" target="_blank" class="btn-social" style="background: #25D366; color: white; border: none; text-decoration: none;">
-                    <i class="fa-brands fa-whatsapp" style="font-size: 22px;"></i>
+            <div class="flex flex-col gap-3.5 mb-5">
+                <a href="https://wa.me/201000000000" target="_blank" class="w-full h-12 rounded-xl bg-[#25D366] text-white flex items-center justify-center gap-3 text-sm font-bold shadow-sm active:scale-[0.98] transition-all">
+                    <i class="fa-brands fa-whatsapp text-xl"></i>
                     <span>محادثة واتساب مباشرة</span>
                 </a>
-                <a href="tel:19000" class="btn-social" style="border-color: var(--primary); text-decoration: none;">
-                    <i class="fa-solid fa-phone" style="color: var(--primary);"></i>
+                <a href="https://t.me/CMD" target="_blank" class="w-full h-12 rounded-xl bg-[#0088cc] text-white flex items-center justify-center gap-3 text-sm font-bold shadow-sm active:scale-[0.98] transition-all">
+                    <i class="fa-brands fa-telegram text-xl"></i>
+                    <span>تواصل مع المطور CMD</span>
+                </a>
+                <a href="tel:19000" class="w-full h-12 rounded-xl border border-slate-200 bg-white flex items-center justify-center gap-3 text-sm font-bold shadow-sm active:scale-[0.98] transition-all">
+                    <i class="fa-solid fa-phone text-slate-900"></i>
                     <span>الاتصال بالخط الساخن</span>
                 </a>
             </div>
-            <button class="btn-submit-luxury" style="background: var(--text-muted);" onclick="closeSupportModal()">إغلاق</button>
+            <button class="w-full h-12 bg-slate-200 text-slate-600 font-bold rounded-xl active:scale-[0.98] transition-all" onclick="closeSupportModal()">إغلاق</button>
         </div>
     </div>
 
@@ -146,12 +152,14 @@
                     if (favItems.length === 0) {
                         if (window.showToast) window.showToast("لا توجد وحدات في المفضلة بعد", "info");
                     } else {
-                        if (window.renderListings) window.renderListings(favItems);
+                        const container = document.getElementById("listingsContainer");
+                        if (container && window.renderCard) {
+                            container.innerHTML = favItems.map(item => window.renderCard(item)).join('');
+                        }
                     }
                 });
             }
         });
-    </script>
     <script type="module" src="app.js"></script>
 </body>
 </html>
