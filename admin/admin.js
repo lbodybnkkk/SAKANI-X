@@ -1,21 +1,50 @@
-// admin/admin.js
 import { db, ref, push, set, onValue, remove, update, get } from "../firebase-config.js";
 
 let uploadedImagesBase64 = [];
 let allSections = [];
 let allHousings = [];
 
-// ========== Navigation ==========
 document.querySelectorAll(".nav-btn").forEach(btn => {
     btn.addEventListener("click", () => {
-        document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
-        document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
-        btn.classList.add("active");
-        document.getElementById(btn.dataset.tab).classList.add("active");
+        document.querySelectorAll(".nav-btn").forEach(b => {
+            b.classList.remove("active", "bg-indigo-600", "text-white");
+            b.classList.add("text-slate-400");
+        });
+        document.querySelectorAll(".tab-content").forEach(c => c.classList.add("hidden"));
+        btn.classList.add("active", "bg-indigo-600", "text-white");
+        btn.classList.remove("text-slate-400");
+        document.getElementById(btn.dataset.tab).classList.remove("hidden");
     });
 });
 
-// ========== Image Converter ==========
+function showToast(msg, type = "info") {
+    const t = document.createElement("div");
+    t.className = `toast-${type} fixed top-5 left-1/2 -translate-x-1/2 z-[9999] px-6 py-3 rounded-xl text-sm font-bold shadow-2xl transition-all duration-300 opacity-0 -translate-y-5`;
+    t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(() => t.classList.remove("opacity-0", "-translate-y-5"), 50);
+    setTimeout(() => { t.classList.add("opacity-0", "-translate-y-5"); setTimeout(() => t.remove(), 300); }, 3000);
+}
+
+function customConfirm(message, onConfirm) {
+    const overlay = document.createElement("div");
+    overlay.className = "fixed inset-0 bg-black/70 backdrop-blur-sm z-[3000] flex items-center justify-center p-4";
+    overlay.innerHTML = `
+        <div class="glass rounded-2xl p-6 max-w-sm w-full text-center">
+            <div class="w-14 h-14 rounded-full bg-rose-500/20 flex items-center justify-center mx-auto mb-4">
+                <i class="fa-solid fa-triangle-exclamation text-2xl text-rose-400"></i>
+            </div>
+            <p class="text-base font-bold mb-6">${message}</p>
+            <div class="flex gap-3">
+                <button class="flex-1 py-3 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-xl transition-all" id="confirmYes">تأكيد</button>
+                <button class="flex-1 py-3 bg-slate-700 hover:bg-slate-600 text-white font-bold rounded-xl transition-all" id="confirmNo">إلغاء</button>
+            </div>
+        </div>`;
+    document.body.appendChild(overlay);
+    overlay.querySelector("#confirmYes").onclick = () => { overlay.remove(); onConfirm(); };
+    overlay.querySelector("#confirmNo").onclick = () => overlay.remove();
+}
+
 async function compressImageToBase64(file, maxW = 1000, quality = 0.75) {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -37,7 +66,6 @@ async function compressImageToBase64(file, maxW = 1000, quality = 0.75) {
     });
 }
 
-// ========== Image Upload ==========
 const imageInput = document.getElementById("image-input");
 const imagePreview = document.getElementById("image-preview");
 
@@ -49,17 +77,17 @@ imageInput.addEventListener("change", async (e) => {
             uploadedImagesBase64.push(base64);
             renderImagePreviews();
         } catch (err) {
-            alert("خطأ في ضغط الصورة: " + err.message);
+            showToast("خطأ في ضغط الصورة: " + err.message, "error");
         }
     }
 });
 
 function renderImagePreviews() {
     imagePreview.innerHTML = uploadedImagesBase64.map((src, i) => `
-        <div style="position:relative; display:inline-block;">
-            <img src="${src}" style="width:90px; height:90px; object-fit:cover; border-radius:8px; border:1px solid var(--border);">
+        <div class="relative inline-block">
+            <img src="${src}" class="w-24 h-24 object-cover rounded-xl border border-slate-700">
             <button type="button" onclick="removeImage(${i})" 
-                    style="position:absolute; top:-6px; right:-6px; width:22px; height:22px; border-radius:50%; background:var(--red); color:#fff; border:none; cursor:pointer; font-size:12px; display:flex; align-items:center; justify-content:center;">
+                    class="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-rose-500 text-white border-2 border-[#0a0f1a] flex items-center justify-center text-xs">
                 <i class="fa-solid fa-xmark"></i>
             </button>
         </div>
@@ -71,7 +99,6 @@ function removeImage(index) {
     renderImagePreviews();
 }
 
-// ========== Housing Submit ==========
 const housingForm = document.getElementById("housing-form");
 housingForm.addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -80,15 +107,10 @@ housingForm.addEventListener("submit", async (e) => {
     const roomsCount = Number(document.getElementById("roomsCount").value) || 1;
     const bedsPerRoom = Number(document.getElementById("bedsPerRoom").value) || 1;
 
-    // توليد الأسرّة تلقائياً
     const beds = [];
     for (let r = 1; r <= roomsCount; r++) {
         for (let b = 1; b <= bedsPerRoom; b++) {
-            beds.push({
-                id: `r${r}-b${b}`,
-                room: `غرفة ${r}`,
-                status: "available"
-            });
+            beds.push({ id: `r${r}-b${b}`, room: `غرفة ${r}`, status: "available" });
         }
     }
 
@@ -106,13 +128,11 @@ housingForm.addEventListener("submit", async (e) => {
         description: document.getElementById("description").value,
         amenities: selectedAmenities,
         images: uploadedImagesBase64.length > 0 ? uploadedImagesBase64 : ["https://via.placeholder.com/600x400?text=No+Image"],
-        roomsCount,
-        bedsPerRoom,
+        roomsCount, bedsPerRoom,
         updatedAt: Date.now()
     };
 
     if (id) {
-        // Edit mode - نحافظ على حالة الأسرّة
         const snap = await get(ref(db, `housings/${id}/beds`));
         if (snap.exists()) {
             const oldBeds = snap.val();
@@ -120,17 +140,15 @@ housingForm.addEventListener("submit", async (e) => {
                 const oldBed = oldBeds.find(b => b.id === newBed.id);
                 return oldBed ? { ...newBed, status: oldBed.status } : newBed;
             });
-        } else {
-            data.beds = beds;
-        }
+        } else { data.beds = beds; }
         await update(ref(db, `housings/${id}`), data);
-        alert("✅ تم تعديل السكن بنجاح!");
+        showToast("تم تعديل السكن بنجاح", "success");
     } else {
         data.createdAt = Date.now();
         data.beds = beds;
         const newRef = push(ref(db, "housings"));
         await set(newRef, data);
-        alert("✅ تمت إضافة السكن بنجاح!");
+        showToast("تمت إضافة السكن بنجاح", "success");
     }
 
     resetForm();
@@ -148,7 +166,6 @@ function resetForm() {
 
 document.getElementById("cancel-edit-btn").addEventListener("click", resetForm);
 
-// ========== Load Sections for Select ==========
 onValue(ref(db, "sections"), (snapshot) => {
     const data = snapshot.val();
     allSections = data ? Object.entries(data).map(([id, val]) => ({ id, ...val })) : [];
@@ -157,14 +174,12 @@ onValue(ref(db, "sections"), (snapshot) => {
         allSections.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
 });
 
-// ========== Load Housings ==========
 onValue(ref(db, "housings"), (snapshot) => {
     const tbody = document.getElementById("housing-table-body");
     tbody.innerHTML = "";
     const data = snapshot.val();
     allHousings = data ? Object.entries(data).map(([id, val]) => ({ id, ...val })) : [];
-    let count = 0;
-    let totalBeds = 0;
+    let count = 0, totalBeds = 0;
 
     if (data) {
         Object.keys(data).forEach(key => {
@@ -174,16 +189,17 @@ onValue(ref(db, "housings"), (snapshot) => {
             totalBeds += beds.length;
             const availableBeds = beds.filter(b => b.status === "available").length;
             const tr = document.createElement("tr");
+            tr.className = "border-b border-slate-800 hover:bg-slate-800/50 transition-all";
             tr.innerHTML = `
-                <td><img src="${item.images?.[0] || ''}" class="thumb-img"></td>
-                <td><strong>${item.title}</strong><br><small>${item.ownerName || ''}</small></td>
-                <td>${item.city}</td>
-                <td>${item.type}</td>
-                <td>${item.price} ج.م</td>
-                <td>${availableBeds}/${beds.length} متاح</td>
-                <td>
-                    <button class="btn-action btn-edit" data-id="${key}"><i class="fa-solid fa-pen"></i></button>
-                    <button class="btn-action btn-delete" data-id="${key}"><i class="fa-solid fa-trash"></i></button>
+                <td class="p-4"><img src="${item.images?.[0] || ''}" class="w-12 h-12 rounded-lg object-cover"></td>
+                <td class="p-4"><strong class="text-white">${item.title}</strong><br><small class="text-slate-500">${item.ownerName || ''}</small></td>
+                <td class="p-4 text-slate-400">${item.city}</td>
+                <td class="p-4 text-slate-400">${item.type}</td>
+                <td class="p-4 text-amber-400 font-bold">${item.price} ج.م</td>
+                <td class="p-4"><span class="${availableBeds > 0 ? 'text-emerald-400' : 'text-rose-400'}">${availableBeds}/${beds.length} متاح</span></td>
+                <td class="p-4">
+                    <button class="btn-edit bg-amber-500 text-black font-bold px-3 py-1.5 rounded-lg text-xs mr-1" data-id="${key}"><i class="fa-solid fa-pen"></i></button>
+                    <button class="btn-delete bg-rose-600 text-white font-bold px-3 py-1.5 rounded-lg text-xs" data-id="${key}"><i class="fa-solid fa-trash"></i></button>
                 </td>`;
             tbody.appendChild(tr);
         });
@@ -192,8 +208,11 @@ onValue(ref(db, "housings"), (snapshot) => {
     document.getElementById("stat-total-beds").innerText = totalBeds;
 
     document.querySelectorAll(".btn-delete").forEach(btn => {
-        btn.addEventListener("click", async () => {
-            if (confirm("تأكيد الحذف؟")) await remove(ref(db, `housings/${btn.dataset.id}`));
+        btn.addEventListener("click", () => {
+            customConfirm("هل أنت متأكد من حذف هذا السكن؟", async () => {
+                await remove(ref(db, `housings/${btn.dataset.id}`));
+                showToast("تم حذف السكن", "info");
+            });
         });
     });
 
@@ -212,9 +231,10 @@ onValue(ref(db, "housings"), (snapshot) => {
             document.querySelector('[data-tab="add-housing"]').click();
         });
     });
+
+    renderOwnerLedger();
 });
 
-// ========== Load Bookings ==========
 onValue(ref(db, "bookings"), (snapshot) => {
     const tbody = document.getElementById("bookings-table-body");
     tbody.innerHTML = "";
@@ -227,26 +247,24 @@ onValue(ref(db, "bookings"), (snapshot) => {
             if (b.status === "approved") approvedCount++;
 
             const statusBadge = b.status === "approved"
-                ? `<span class="badge badge-approved">مقبول</span>`
+                ? `<span class="bg-emerald-500/20 text-emerald-400 px-3 py-1 rounded-full text-xs font-bold">مقبول</span>`
                 : b.status === "rejected"
-                ? `<span class="badge badge-rejected">مرفوض</span>`
-                : `<span class="badge badge-pending">قيد الانتظار</span>`;
+                ? `<span class="bg-rose-500/20 text-rose-400 px-3 py-1 rounded-full text-xs font-bold">مرفوض</span>`
+                : `<span class="bg-amber-500/20 text-amber-400 px-3 py-1 rounded-full text-xs font-bold">قيد الانتظار</span>`;
 
             const tr = document.createElement("tr");
+            tr.className = "border-b border-slate-800 hover:bg-slate-800/50 transition-all";
             tr.innerHTML = `
-                <td><strong>${b.userName || '—'}</strong></td>
-                <td><a href="https://wa.me/2${b.userPhone}" target="_blank" style="color: var(--green); text-decoration:none;">
-                    <i class="fa-brands fa-whatsapp"></i> ${b.userPhone || '—'}
-                </a></td>
-                <td>${b.userGovernorate || '—'}</td>
-                <td>${b.housingTitle || '—'}<br><small style="color:var(--text-muted);">${b.bedLabel || ''}</small></td>
-                <td><small>من: ${b.checkInDate || '—'}<br>إلى: ${b.checkOutDate || '—'}</small></td>
-                <td>${b.notes || 'لا يوجد'}</td>
-                <td>${statusBadge}</td>
-                <td>
-                    <button class="btn-action btn-approve" data-id="${key}" title="قبول"><i class="fa-solid fa-check"></i></button>
-                    <button class="btn-action btn-reject" data-id="${key}" title="رفض"><i class="fa-solid fa-xmark"></i></button>
-                    <button class="btn-action btn-delete" data-id="${key}" title="حذف"><i class="fa-solid fa-trash"></i></button>
+                <td class="p-4 text-white font-bold">${b.userName || '—'}</td>
+                <td class="p-4"><a href="https://wa.me/2${b.userPhone}" target="_blank" class="text-emerald-400 hover:underline"><i class="fa-brands fa-whatsapp"></i> ${b.userPhone || '—'}</a></td>
+                <td class="p-4 text-slate-400">${b.userGovernorate || '—'}</td>
+                <td class="p-4 text-slate-300">${b.housingTitle || '—'}<br><small class="text-slate-500">${b.bedLabel || ''}</small></td>
+                <td class="p-4 text-slate-400 text-xs">من: ${b.checkInDate || '—'}<br>إلى: ${b.checkOutDate || '—'}</td>
+                <td class="p-4">${statusBadge}</td>
+                <td class="p-4">
+                    <button class="btn-approve bg-emerald-600 text-white font-bold px-3 py-1.5 rounded-lg text-xs mr-1" data-id="${key}" title="قبول"><i class="fa-solid fa-check"></i></button>
+                    <button class="btn-reject bg-slate-600 text-white font-bold px-3 py-1.5 rounded-lg text-xs mr-1" data-id="${key}" title="رفض"><i class="fa-solid fa-xmark"></i></button>
+                    <button class="btn-delete bg-rose-600 text-white font-bold px-3 py-1.5 rounded-lg text-xs" data-id="${key}" title="حذف"><i class="fa-solid fa-trash"></i></button>
                 </td>`;
             tbody.appendChild(tr);
         });
@@ -260,7 +278,6 @@ onValue(ref(db, "bookings"), (snapshot) => {
             const bookingSnap = await get(ref(db, `bookings/${b.dataset.id}`));
             const booking = bookingSnap.val();
             await update(ref(db, `bookings/${b.dataset.id}`), { status: "approved" });
-            // تحديث حالة السرير
             if (booking?.housingId && booking?.bedId) {
                 const housingSnap = await get(ref(db, `housings/${booking.housingId}/beds`));
                 if (housingSnap.exists()) {
@@ -269,56 +286,147 @@ onValue(ref(db, "bookings"), (snapshot) => {
                     await update(ref(db, `housings/${booking.housingId}`), { beds: updated });
                 }
             }
+            showToast("تم قبول الحجز", "success");
         });
     });
     document.querySelectorAll("#bookings-table-body .btn-reject").forEach(b => {
-        b.addEventListener("click", () => update(ref(db, `bookings/${b.dataset.id}`), { status: "rejected" }));
+        b.addEventListener("click", async () => {
+            await update(ref(db, `bookings/${b.dataset.id}`), { status: "rejected" });
+            showToast("تم رفض الحجز", "info");
+        });
     });
     document.querySelectorAll("#bookings-table-body .btn-delete").forEach(b => {
-        b.addEventListener("click", async () => {
-            if (confirm("حذف هذا الحجز؟")) await remove(ref(db, `bookings/${b.dataset.id}`));
+        b.addEventListener("click", () => {
+            customConfirm("حذف هذا الحجز؟", async () => {
+                await remove(ref(db, `bookings/${b.dataset.id}`));
+                showToast("تم حذف الحجز", "info");
+            });
         });
     });
 });
 
-// ========== Sections ==========
 async function addSection() {
     const name = document.getElementById("section-name").value.trim();
     const icon = document.getElementById("section-icon").value.trim() || "fa-building";
-    if (!name) return alert("أدخل اسم القسم");
-    
+    if (!name) return showToast("أدخل اسم القسم", "error");
     const newRef = push(ref(db, "sections"));
     await set(newRef, { name, icon, createdAt: Date.now() });
     document.getElementById("section-name").value = "";
-    alert("✅ تمت إضافة القسم بنجاح!");
+    showToast("تمت إضافة القسم بنجاح", "success");
 }
 
 onValue(ref(db, "sections"), (snapshot) => {
     const tbody = document.getElementById("sections-table-body");
     tbody.innerHTML = "";
     const data = snapshot.val();
-    
     if (data) {
         Object.entries(data).forEach(([key, section]) => {
             const count = allHousings.filter(h => h.section === key).length;
             const tr = document.createElement("tr");
+            tr.className = "border-b border-slate-800 hover:bg-slate-800/50 transition-all";
             tr.innerHTML = `
-                <td><strong>${section.name}</strong></td>
-                <td><i class="fa-solid ${section.icon}"></i> ${section.icon}</td>
-                <td>${count} وحدة</td>
-                <td>
-                    <button class="btn-action btn-delete" data-id="${key}"><i class="fa-solid fa-trash"></i></button>
+                <td class="p-4 text-white font-bold">${section.name}</td>
+                <td class="p-4 text-slate-400"><i class="fa-solid ${section.icon}"></i> ${section.icon}</td>
+                <td class="p-4 text-slate-400">${count} وحدة</td>
+                <td class="p-4">
+                    <button class="btn-delete bg-rose-600 text-white font-bold px-3 py-1.5 rounded-lg text-xs" data-id="${key}"><i class="fa-solid fa-trash"></i></button>
                 </td>`;
             tbody.appendChild(tr);
         });
     }
-
     document.querySelectorAll("#sections-table-body .btn-delete").forEach(b => {
-        b.addEventListener("click", async () => {
-            if (confirm("حذف هذا القسم؟")) await remove(ref(db, `sections/${b.dataset.id}`));
+        b.addEventListener("click", () => {
+            customConfirm("حذف هذا القسم؟", async () => {
+                await remove(ref(db, `sections/${b.dataset.id}`));
+                showToast("تم حذف القسم", "info");
+            });
         });
     });
 });
 
+function renderOwnerLedger() {
+    const container = document.getElementById("ownerLedgerContainer");
+    if (!container) return;
+
+    const sorted = [...allHousings].sort((a, b) => {
+        const aFull = (a.beds || []).length > 0 && (a.beds || []).every(b => b.status === 'occupied');
+        const bFull = (b.beds || []).length > 0 && (b.beds || []).every(b => b.status === 'occupied');
+        if (aFull && !bFull) return 1;
+        if (!aFull && bFull) return -1;
+        return (b.createdAt || 0) - (a.createdAt || 0);
+    });
+
+    if (sorted.length === 0) {
+        container.innerHTML = `<div class="text-center py-16 text-slate-500 col-span-full"><i class="fa-solid fa-address-book text-5xl mb-4 opacity-30"></i><p>لا توجد وحدات مسجلة</p></div>`;
+        return;
+    }
+
+    container.innerHTML = sorted.map(item => {
+        const beds = item.beds || [];
+        const available = beds.filter(b => b.status === 'available').length;
+        const isFull = beds.length > 0 && available === 0;
+
+        return `
+        <div class="glass rounded-2xl p-5 cursor-pointer hover:border-indigo-500/50 transition-all ${isFull ? 'opacity-60' : ''}" onclick="openOwnerDetail('${item.id}')">
+            <div class="flex items-start justify-between mb-3">
+                <div class="w-12 h-12 rounded-xl bg-indigo-500/20 flex items-center justify-center text-indigo-400">
+                    <i class="fa-solid fa-building"></i>
+                </div>
+                <span class="text-xs font-bold px-2.5 py-1 rounded-full ${isFull ? 'bg-rose-500/20 text-rose-400' : 'bg-emerald-500/20 text-emerald-400'}">
+                    ${isFull ? 'مكتمل' : `متاح ${available}`}
+                </span>
+            </div>
+            <h3 class="text-base font-bold text-white mb-1">${item.title}</h3>
+            <p class="text-sm text-slate-400"><i class="fa-solid fa-user text-indigo-400"></i> ${item.ownerName || 'غير محدد'}</p>
+            <p class="text-xs text-slate-500 mt-1"><i class="fa-solid fa-location-dot"></i> ${item.address || item.city || ''}</p>
+        </div>`;
+    }).join('');
+}
+
+function openOwnerDetail(housingId) {
+    const item = allHousings.find(h => h.id === housingId);
+    if (!item) return;
+
+    const beds = item.beds || [];
+    const available = beds.filter(b => b.status === 'available').length;
+    const occupied = beds.filter(b => b.status === 'occupied').length;
+
+    document.getElementById("ownerModalTitle").innerText = item.title || "تفاصيل الوحدة";
+    document.getElementById("ownerModalContent").innerHTML = `
+        <div class="space-y-4">
+            <img src="${item.images?.[0] || ''}" class="w-full h-48 object-cover rounded-xl" onerror="this.src='https://via.placeholder.com/600x400?text=SAKANI-X'">
+            <div class="bg-[#0f172a] rounded-xl p-4 space-y-3">
+                <div class="flex justify-between text-sm"><span class="text-slate-400">اسم المالك:</span><strong class="text-white">${item.ownerName || 'غير محدد'}</strong></div>
+                <div class="flex justify-between text-sm"><span class="text-slate-400">رقم الهاتف:</span><a href="tel:${item.phone}" class="text-indigo-400 font-bold">${item.phone || '—'}</a></div>
+                <div class="flex justify-between text-sm"><span class="text-slate-400">العنوان:</span><strong class="text-white">${item.address || item.city || '—'}</strong></div>
+                <div class="flex justify-between text-sm"><span class="text-slate-400">الإيجار:</span><strong class="text-amber-400">${item.price} ج.م</strong></div>
+                <div class="flex justify-between text-sm"><span class="text-slate-400">التأمين:</span><strong class="text-white">${item.deposit || 0} ج.م</strong></div>
+            </div>
+            <div class="bg-[#0f172a] rounded-xl p-4">
+                <h4 class="text-sm font-bold text-slate-300 mb-3"><i class="fa-solid fa-bed text-indigo-400"></i> حالة الأسرّة</h4>
+                <div class="grid grid-cols-3 gap-3 text-center">
+                    <div class="bg-emerald-500/10 rounded-lg p-3"><p class="text-2xl font-extrabold text-emerald-400">${available}</p><p class="text-xs text-slate-400">متاح</p></div>
+                    <div class="bg-rose-500/10 rounded-lg p-3"><p class="text-2xl font-extrabold text-rose-400">${occupied}</p><p class="text-xs text-slate-400">محجوز</p></div>
+                    <div class="bg-slate-500/10 rounded-lg p-3"><p class="text-2xl font-extrabold text-slate-300">${beds.length}</p><p class="text-xs text-slate-400">الإجمالي</p></div>
+                </div>
+                <div class="mt-3 flex flex-wrap gap-2">
+                    ${beds.map(b => `<span class="text-xs px-2.5 py-1 rounded-full ${b.status === 'available' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'}">${b.room} - ${b.status === 'available' ? 'متاح' : 'محجوز'}</span>`).join('')}
+                </div>
+            </div>
+            <a href="https://wa.me/2${item.phone}" target="_blank" class="block w-full text-center bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-xl transition-all">
+                <i class="fa-brands fa-whatsapp"></i> تواصل مع المالك
+            </a>
+        </div>`;
+    document.getElementById("ownerDetailModal").classList.remove("hidden");
+    document.getElementById("ownerDetailModal").classList.add("flex");
+}
+
+function closeOwnerModal() {
+    document.getElementById("ownerDetailModal").classList.add("hidden");
+    document.getElementById("ownerDetailModal").classList.remove("flex");
+}
+
 window.removeImage = removeImage;
 window.addSection = addSection;
+window.openOwnerDetail = openOwnerDetail;
+window.closeOwnerModal = closeOwnerModal;
