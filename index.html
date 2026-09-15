@@ -32,9 +32,14 @@
             <i class="fa-solid fa-building-shield text-amber-500 text-2xl"></i>
             <span>SAKANI<span class="text-amber-500">X</span></span>
         </a>
-        <button class="w-11 h-11 rounded-full border-2 border-amber-500 bg-slate-100 flex items-center justify-center overflow-hidden" id="authTriggerBtn" onclick="toggleAuthModal(true)">
-            <i class="fa-solid fa-user text-slate-900"></i>
-        </button>
+        <div class="flex items-center gap-2.5">
+            <button class="w-11 h-11 rounded-full border border-slate-200 bg-slate-100 flex items-center justify-center" id="supportTriggerBtn" onclick="openSupportModal()" title="الدعم والمساعدة">
+                <i class="fa-solid fa-headset text-slate-700"></i>
+            </button>
+            <button class="w-11 h-11 rounded-full border-2 border-amber-500 bg-slate-100 flex items-center justify-center overflow-hidden" id="authTriggerBtn" onclick="toggleAuthModal(true)">
+                <i class="fa-solid fa-user text-slate-900"></i>
+            </button>
+        </div>
     </header>
 
     <div class="px-5 pt-4">
@@ -141,25 +146,41 @@
 
     <script type="module" src="app.js"></script>
     <script>
+        function showFavoritesView() {
+            const favItems = window.userFavorites 
+                ? window.allHousings.filter(h => window.userFavorites.includes(h.id))
+                : [];
+            if (favItems.length === 0) {
+                if (window.showToast) window.showToast("لا توجد وحدات في المفضلة بعد", "info");
+            } else {
+                const container = document.getElementById("listingsContainer");
+                if (container && window.renderCard) {
+                    container.innerHTML = favItems.map(item => window.renderCard(item)).join('');
+                }
+            }
+        }
+
         document.addEventListener("DOMContentLoaded", () => {
             const favNavBtn = document.getElementById("favoritesNavBtn");
             if (favNavBtn) {
                 favNavBtn.addEventListener("click", (e) => {
                     e.preventDefault();
-                    const favItems = window.userFavorites 
-                        ? window.allHousings.filter(h => window.userFavorites.includes(h.id))
-                        : [];
-                    if (favItems.length === 0) {
-                        if (window.showToast) window.showToast("لا توجد وحدات في المفضلة بعد", "info");
-                    } else {
-                        const container = document.getElementById("listingsContainer");
-                        if (container && window.renderCard) {
-                            container.innerHTML = favItems.map(item => window.renderCard(item)).join('');
-                        }
-                    }
+                    showFavoritesView();
                 });
             }
+
+            
+            if (window.location.hash === "#favorites") {
+                // بستنى شوية لحد ما app.js يجيب بيانات الوحدات والمفضلة من فايربيز
+                const waitForData = setInterval(() => {
+                    if (window.allHousings && window.allHousings.length > 0) {
+                        clearInterval(waitForData);
+                        showFavoritesView();
+                    }
+                }, 200);
+                setTimeout(() => clearInterval(waitForData), 8000);
+            }
         });
-    <script type="module" src="app.js"></script>
+    </script>
 </body>
 </html>
