@@ -80,7 +80,14 @@ function applyFiltersAndRender() {
         filtered = filtered.filter(p => p.gender === activeFilter);
     }
 
-    renderListings(filtered);
+    // تخزين القائمة المُفلترة لاستخدامها في الأقسام
+    window._activeFilteredList = filtered;
+
+    // عرض الأقسام مع الفلتر
+    renderSections(filtered);
+    
+    // عرض القائمة الرئيسية (بدون الوحدات اللي داخل أقسام)
+    renderListings(filtered.filter(h => !h.section));
 }
 
 function renderCard(item) {
@@ -126,12 +133,26 @@ function renderListings(items) {
     const container = document.getElementById("listingsContainer");
     if (!container) return;
 
+    // هل يوجد وحدات داخل الأقسام بعد الفلترة؟
+    const filteredList = window._activeFilteredList || [];
+    const hasSectionItems = allSections.some(section => 
+        filteredList.some(h => h.section === section.id)
+    );
+
+    // لو مفيش وحدات في القائمة الرئيسية
     if (items.length === 0) {
+        // لو في وحدات في الأقسام → اخفي الرسالة تماماً
+        if (hasSectionItems) {
+            container.innerHTML = "";
+            return;
+        }
+        
+        // لو مفيش في أي مكان → اعرض رسالة "لا توجد"
         container.innerHTML = `
             <div class="text-center py-16 px-4 text-slate-400">
                 <i class="fa-solid fa-building text-5xl mb-4 opacity-30"></i>
                 <h3 class="text-lg font-bold text-slate-900 mb-1">لا توجد وحدات سكنية متاحة</h3>
-                <p class="text-sm">سيتم إضافة وحدات جديدة قريباً</p>
+                <p class="text-sm">جرّب فلتر مختلف أو عُد لاحقاً</p>
             </div>`;
         return;
     }
@@ -139,17 +160,24 @@ function renderListings(items) {
     container.innerHTML = items.map(item => renderCard(item)).join('');
 }
 
-function renderSections() {
+function renderSections(filteredList) {
     const container = document.getElementById("sectionsContainer");
     if (!container) return;
     
+    // لو مفيش أقسام أصلاً
     if (allSections.length === 0) {
         container.innerHTML = "";
         return;
     }
+
+    // لو مفيش قائمة مُفلترة اتبعتت، خد القائمة الكاملة
+    const list = filteredList || window._activeFilteredList || allHousings;
     
-    container.innerHTML = allSections.map(section => {
-        const sectionHousings = allHousings.filter(h => h.section === section.id);
+    const sectionsHtml = allSections.map(section => {
+        // فلترة وحدات القسم حسب الفلتر النشط
+        const sectionHousings = list.filter(h => h.section === section.id);
+        
+        // لو القسم فاضي بعد الفلترة → اخفيه تماماً
         if (sectionHousings.length === 0) return "";
         
         return `
@@ -158,6 +186,7 @@ function renderSections() {
                 <h3 class="text-lg font-extrabold text-slate-900 flex items-center gap-2">
                     <i class="fa-solid ${section.icon || 'fa-building'} text-amber-500"></i>
                     ${section.name}
+                    <span class="text-xs font-bold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">${sectionHousings.length}</span>
                 </h3>
                 <a href="view-more.html?category=${section.id}" class="text-xs font-bold text-amber-600 border border-slate-200 px-3 py-1.5 rounded-full hover:bg-amber-50 transition-all flex items-center gap-1">
                     عرض المزيد <i class="fa-solid fa-chevron-left"></i>
@@ -172,6 +201,8 @@ function renderSections() {
             </div>
         </div>`;
     }).join('');
+
+    container.innerHTML = sectionsHtml;
 }
 
 async function handleFavToggle(housingId, btnEl) {
