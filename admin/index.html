@@ -20,6 +20,37 @@
 </head>
 <body class="min-h-screen flex">
 
+    <!-- شاشة تسجيل دخول الأدمن -->
+    <!-- بالإضافة دي، محدش يقدر يشوف أو يعدّل أي حاجة في لوحة الإدارة من غير ما يسجّل
+         دخول بحساب أدمن مصرّح له فعليًا (متسجل في عقدة admins بقاعدة البيانات). -->
+    <div id="adminLoginScreen" class="fixed inset-0 z-[5000] flex items-center justify-center bg-[#0a0f1a] p-5">
+        <div class="glass rounded-2xl p-8 w-full max-w-sm text-center">
+            <div class="w-16 h-16 rounded-2xl bg-indigo-600/20 flex items-center justify-center mx-auto mb-4">
+                <i class="fa-solid fa-building-shield text-3xl text-indigo-400"></i>
+            </div>
+            <h2 class="text-xl font-extrabold mb-1">SAKANI <span class="text-indigo-400">X</span></h2>
+            <p class="text-sm text-slate-400 mb-6">تسجيل دخول لوحة الإدارة</p>
+
+            <div id="adminLoginError" class="hidden bg-rose-500/15 border border-rose-500/30 text-rose-400 text-sm font-bold rounded-xl px-4 py-3 mb-4"></div>
+
+            <div class="flex flex-col gap-3 text-right">
+                <div class="flex flex-col gap-1.5">
+                    <label class="text-xs font-semibold text-slate-400">البريد الإلكتروني</label>
+                    <input type="email" id="adminEmail" class="bg-[#0f172a] border border-slate-700 rounded-xl px-4 py-3 text-sm outline-none focus:border-indigo-500" placeholder="admin@example.com">
+                </div>
+                <div class="flex flex-col gap-1.5">
+                    <label class="text-xs font-semibold text-slate-400">كلمة المرور</label>
+                    <input type="password" id="adminPassword" class="bg-[#0f172a] border border-slate-700 rounded-xl px-4 py-3 text-sm outline-none focus:border-indigo-500" placeholder="••••••••">
+                </div>
+                <button id="adminLoginBtn" onclick="adminLogin()" class="mt-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-xl transition-all">
+                    دخول
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="adminDashboardWrapper" class="hidden min-h-screen flex w-full">
+
     <aside class="hidden md:flex flex-col w-64 bg-[#0b0f19] border-l border-slate-800 p-6 gap-8 fixed right-0 top-0 h-full z-40">
         <div class="flex items-center gap-3">
             <i class="fa-solid fa-building-shield text-2xl text-indigo-500"></i>
@@ -33,6 +64,9 @@
             <button class="nav-btn flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-slate-400 hover:bg-indigo-600 hover:text-white transition-all text-right" data-tab="sections"><i class="fa-solid fa-layer-group w-5"></i> الأقسام</button>
             <button class="nav-btn flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-slate-400 hover:bg-indigo-600 hover:text-white transition-all text-right" data-tab="owner-ledger"><i class="fa-solid fa-address-book w-5"></i> سجل الملاك</button>
         </nav>
+        <button onclick="adminLogout()" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-rose-400 hover:bg-rose-500/10 transition-all text-right">
+            <i class="fa-solid fa-arrow-right-from-bracket w-5"></i> تسجيل الخروج
+        </button>
         <div class="text-xs text-slate-600 text-center border-t border-slate-800 pt-4">
             <p>تطوير <span class="text-indigo-400 font-bold">CMD</span></p>
         </div>
@@ -348,6 +382,8 @@
             <div id="ownerModalContent"></div>
         </div>
     </div>
+
+    </div><!-- end #adminDashboardWrapper -->
 
     <script type="module" src="admin.js"></script>
 </body>
