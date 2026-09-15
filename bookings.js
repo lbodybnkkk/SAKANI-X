@@ -1,6 +1,7 @@
 // bookings.js
-import { auth, db, ref, onValue } from "./firebase-config.js";
+import { auth, db, ref } from "./firebase-config.js";
 import { showToast, onAuthStateChanged } from "./auth.js";
+import { listenToUserBookings } from "./data-service.js";
 
 let allBookings = [];
 
@@ -19,12 +20,9 @@ onAuthStateChanged(auth, (user) => {
         return;
     }
 
-    onValue(ref(db, "bookings"), (snapshot) => {
-        const data = snapshot.val() || {};
-        allBookings = Object.entries(data)
-            .filter(([_, v]) => v.userId === user.uid)
-            .map(([id, v]) => ({ id, ...v }))
-            .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+    // بيستخدم استعلام بيرجع بس حجوزات المستخدم الحالي (مش كل حجوزات كل الناس)
+    listenToUserBookings(user.uid, (bookings) => {
+        allBookings = bookings;
         renderBookings(allBookings);
     });
 });
