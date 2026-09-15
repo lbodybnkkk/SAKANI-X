@@ -57,22 +57,24 @@
     </nav>
 
     <script type="module">
-        import { db, ref, push, set } from "./firebase-config.js";
         import { showToast } from "./auth.js";
 
-        async function submitTicket() {
+        // كانت التذكرة بتتحفظ في قاعدة بيانات "support_tickets" من غير ما يكون
+        // فيها اسم أو تليفون صاحبها، وكمان لوحة إدارة CMD-X مفيهاش أي تبويب
+        // لعرض التذاكر دي - يعني العميل كان بيحس إنه بعت تذكرة بس محدش بيشوفها
+        // أو بيرد عليه. دلوقتي الزرار بيبعت الاستفسار مباشرة عن طريق واتساب
+        // بنفس رقم الدعم الموجود فوق في الصفحة، عشان يوصل فعليًا لحد بيرد.
+        function submitTicket() {
             const subject = document.getElementById("ticketSubject").value.trim();
             const message = document.getElementById("ticketMessage").value.trim();
             if (!subject || !message) return showToast("أكمل جميع الحقول", "error");
-            try {
-                const newRef = push(ref(db, "support_tickets"));
-                await set(newRef, { subject, message, status: "open", createdAt: Date.now() });
-                showToast("تم إرسال تذكرتك بنجاح، سيتم الرد عليك قريباً", "success");
-                document.getElementById("ticketSubject").value = "";
-                document.getElementById("ticketMessage").value = "";
-            } catch (err) {
-                showToast("فشل الإرسال: " + err.message, "error");
-            }
+
+            const text = encodeURIComponent(`استفسار جديد من تطبيق SAKANI-X\n\nالموضوع: ${subject}\n\nالتفاصيل: ${message}`);
+            window.open(`https://wa.me/201000000000?text=${text}`, "_blank");
+
+            showToast("جاري تحويلك لواتساب لإرسال استفسارك", "success");
+            document.getElementById("ticketSubject").value = "";
+            document.getElementById("ticketMessage").value = "";
         }
         window.submitTicket = submitTicket;
     </script>
