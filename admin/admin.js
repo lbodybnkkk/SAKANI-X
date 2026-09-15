@@ -172,14 +172,41 @@ housingForm?.addEventListener("submit", async (e) => {
     }
 
     // توليد الأسرّة
+    // ------------------------------------------------------------------
+    // مشكلة كانت موجودة: كل مرة تعدّل بيانات سكن (حتى لو مجرد تغيير السعر)،
+    // الكود كان بيعيد بناء مصفوفة الأسرّة من الصفر بالاعتماد على رقم
+    // "الأسرّة المشغولة" اللي بتكتبه يدويًا في الفورم. المشكلة إن لما عميل
+    // يحجز سرير معيّن ويوافق الأدمن عليه، السرير ده بياخد status: "occupied"
+    // في قاعدة البيانات مباشرة (من غير ما يزوّد رقم "الأسرّة المشغولة" في
+    // بيانات السكن نفسه). فلو الأدمن رجع بعد كده وعدّل السكن من غير ما يفتكر
+    // يزوّد الرقم يدويًا، الحفظ كان بيمسح حجز العميل الحقيقي ويرجّع السرير
+    // "متاح" تاني، أو يحجز سرير تاني غلط بدل السرير اللي اتحجز فعليًا.
+    //
+    // الحل: لو السكن موجود من قبل (تعديل)، بنجيب حالة كل سرير محفوظة فعليًا
+    // ونحافظ عليها زي ما هي. رقم "الأسرّة المشغولة" اليدوي بيتطبق بس على
+    // الأسرّة الجديدة اللي متكنش موجودة قبل كده (لو زودت عدد الغرف/الأسرّة).
+    let existingBedsMap = {};
+    if (id) {
+        const existingBedsSnap = await get(ref(db, `housings/${id}/beds`));
+        if (existingBedsSnap.exists()) {
+            (existingBedsSnap.val() || []).forEach(bed => {
+                existingBedsMap[bed.id] = bed.status;
+            });
+        }
+    }
+
     const beds = [];
     let bedIndex = 0;
     for (let r = 1; r <= roomsCount; r++) {
         for (let b = 1; b <= bedsPerRoom; b++) {
+            const bedId = `r${r}-b${b}`;
+            const status = existingBedsMap.hasOwnProperty(bedId)
+                ? existingBedsMap[bedId]
+                : (bedIndex < occupiedBeds ? "occupied" : "available");
             beds.push({
-                id: `r${r}-b${b}`,
+                id: bedId,
                 room: `غرفة ${r}`,
-                status: bedIndex < occupiedBeds ? "occupied" : "available"
+                status
             });
             bedIndex++;
         }
