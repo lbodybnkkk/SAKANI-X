@@ -470,35 +470,23 @@ onValue(ref(db, "sections"), (snapshot) => {
 });
 
 // ========== سجل الملاك (يدوي) ==========
+// تم حذف حقول "عدد الغرف" و"عدد الأسرّة لكل غرفة" و"عدد الأسرّة المشغولة"
+// و"الحالة" من الفورم بناءً على طلبك. السجل بقى بس: اسم المالك، رقم الهاتف،
+// عنوان العقار، صورة اختيارية، وملاحظات.
 async function addLedgerEntry() {
     const ownerName = document.getElementById("ledger-owner-name").value.trim();
     const ownerPhone = document.getElementById("ledger-owner-phone").value.trim();
     const propertyAddress = document.getElementById("ledger-property-address").value.trim();
-    const rooms = Number(document.getElementById("ledger-rooms").value) || 1;
-    const bedsPerRoom = Number(document.getElementById("ledger-beds-per-room").value) || 1;
-    const occupied = Number(document.getElementById("ledger-occupied").value) || 0;
-    const status = document.getElementById("ledger-status").value;
     const notes = document.getElementById("ledger-notes").value.trim();
 
     if (!ownerName || !ownerPhone || !propertyAddress) {
         return showToast("أكمل اسم المالك ورقمه والعنوان", "error");
     }
 
-    const total = rooms * bedsPerRoom;
-    if (occupied > total) {
-        return showToast("عدد الأسرّة المشغولة أكبر من الإجمالي!", "error");
-    }
-
     const data = {
         ownerName,
         ownerPhone,
         propertyAddress,
-        rooms,
-        bedsPerRoom,
-        totalBeds: total,
-        occupiedBeds: occupied,
-        availableBeds: total - occupied,
-        status,
         notes,
         image: ledgerImageBase64 || "",
         createdAt: Date.now()
@@ -513,9 +501,6 @@ async function addLedgerEntry() {
         ["ledger-owner-name","ledger-owner-phone","ledger-property-address","ledger-notes"].forEach(id => {
             document.getElementById(id).value = "";
         });
-        document.getElementById("ledger-rooms").value = 1;
-        document.getElementById("ledger-beds-per-room").value = 1;
-        document.getElementById("ledger-occupied").value = 0;
         removeLedgerImage();
     } catch (err) {
         showToast("فشل الحفظ: " + err.message, "error");
@@ -529,14 +514,8 @@ onValue(ref(db, "owner_ledger"), (snapshot) => {
     const data = snapshot.val();
     allLedgerEntries = data ? Object.entries(data).map(([id, val]) => ({ id, ...val })) : [];
 
-    // ترتيب: المتاح حديثاً في الأعلى، المكتمل في الأسفل
-    const sorted = [...allLedgerEntries].sort((a, b) => {
-        const statusOrder = { available: 0, partial: 1, full: 2 };
-        const aOrder = statusOrder[a.status] ?? 1;
-        const bOrder = statusOrder[b.status] ?? 1;
-        if (aOrder !== bOrder) return aOrder - bOrder;
-        return (b.createdAt || 0) - (a.createdAt || 0);
-    });
+    // الترتيب بقى بالأحدث فقط (اتشالت حقول الحالة/الأسرّة من السجل بناءً على طلبك)
+    const sorted = [...allLedgerEntries].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
 
     if (sorted.length === 0) {
         container.innerHTML = `<div class="text-center py-12 text-slate-500 col-span-full">
@@ -547,14 +526,8 @@ onValue(ref(db, "owner_ledger"), (snapshot) => {
     }
 
     container.innerHTML = sorted.map(item => {
-        const statusInfo = item.status === "full"
-            ? { text: "مكتمل", color: "bg-rose-500/20 text-rose-400" }
-            : item.status === "partial"
-            ? { text: `متاح ${item.availableBeds || 0}`, color: "bg-amber-500/20 text-amber-400" }
-            : { text: `متاح ${item.availableBeds || 0}`, color: "bg-emerald-500/20 text-emerald-400" };
-
         return `
-        <div class="glass rounded-2xl p-4 cursor-pointer hover:border-indigo-500/50 transition-all ${item.status === 'full' ? 'opacity-60' : ''}" 
+        <div class="glass rounded-2xl p-4 cursor-pointer hover:border-indigo-500/50 transition-all" 
              onclick="openLedgerDetail('${item.id}')">
             <div class="flex items-start justify-between mb-3">
                 <div class="w-11 h-11 rounded-xl bg-indigo-500/20 flex items-center justify-center text-indigo-400 overflow-hidden">
@@ -562,16 +535,10 @@ onValue(ref(db, "owner_ledger"), (snapshot) => {
                         ? `<img src="${item.image}" class="w-full h-full object-cover">` 
                         : `<i class="fa-solid fa-building"></i>`}
                 </div>
-                <span class="text-xs font-bold px-2.5 py-1 rounded-full ${statusInfo.color}">
-                    ${statusInfo.text}
-                </span>
             </div>
             <h3 class="text-sm font-bold text-white mb-1 truncate">${item.propertyAddress}</h3>
             <p class="text-xs text-slate-400 truncate">
                 <i class="fa-solid fa-user text-indigo-400"></i> ${item.ownerName}
-            </p>
-            <p class="text-xs text-slate-500 mt-1">
-                <i class="fa-solid fa-bed"></i> ${item.availableBeds} من أصل ${item.totalBeds} سرير
             </p>
             <button onclick="event.stopPropagation(); deleteLedgerEntry('${item.id}')" 
                     class="mt-3 w-full text-center bg-rose-600/20 hover:bg-rose-600/40 text-rose-400 text-xs font-bold py-2 rounded-lg transition-all">
@@ -602,33 +569,6 @@ function openLedgerDetail(id) {
                 <div class="flex justify-between text-sm">
                     <span class="text-slate-400">العنوان:</span>
                     <strong class="text-white text-left">${item.propertyAddress}</strong>
-                </div>
-                <div class="flex justify-between text-sm">
-                    <span class="text-slate-400">عدد الغرف:</span>
-                    <strong class="text-white">${item.rooms}</strong>
-                </div>
-                <div class="flex justify-between text-sm">
-                    <span class="text-slate-400">أسرّة لكل غرفة:</span>
-                    <strong class="text-white">${item.bedsPerRoom}</strong>
-                </div>
-            </div>
-            <div class="bg-[#0f172a] rounded-xl p-4">
-                <h4 class="text-sm font-bold text-slate-300 mb-3">
-                    <i class="fa-solid fa-bed text-indigo-400"></i> حالة الأسرّة
-                </h4>
-                <div class="grid grid-cols-3 gap-3 text-center">
-                    <div class="bg-emerald-500/10 rounded-lg p-3">
-                        <p class="text-xl font-extrabold text-emerald-400">${item.availableBeds}</p>
-                        <p class="text-xs text-slate-400">متاح</p>
-                    </div>
-                    <div class="bg-rose-500/10 rounded-lg p-3">
-                        <p class="text-xl font-extrabold text-rose-400">${item.occupiedBeds}</p>
-                        <p class="text-xs text-slate-400">مشغول</p>
-                    </div>
-                    <div class="bg-slate-500/10 rounded-lg p-3">
-                        <p class="text-xl font-extrabold text-slate-300">${item.totalBeds}</p>
-                        <p class="text-xs text-slate-400">الإجمالي</p>
-                    </div>
                 </div>
             </div>
             ${item.notes ? `<div class="bg-[#0f172a] rounded-xl p-4 text-sm text-slate-300">
