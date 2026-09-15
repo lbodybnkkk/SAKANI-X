@@ -411,6 +411,16 @@ onValue(ref(db, "housings"), (snapshot) => {
                 if (el) el.value = item[f] || "";
             });
             document.getElementById("occupiedBeds").value = item.occupiedBeds || 0;
+
+            // كان ناقص: تحديد المرافق والخدمات المحفوظة فعليًا للسكن ده وقت فتح
+            // التعديل. من غيره، كل مربعات "المرافق والخدمات" كانت بترجع فاضية
+            // كل مرة تفتح تعديل، فكنت مضطر تعلّم عليها من الأول كل مرة، وأي نسيان
+            // كان بيمسح المرافق المحفوظة فعليًا لما تحفظ.
+            const savedAmenities = item.amenities || [];
+            document.querySelectorAll(".amenities-check").forEach(chk => {
+                chk.checked = savedAmenities.includes(chk.value);
+            });
+
             uploadedImagesBase64 = item.images || [];
             renderImagePreviews();
             calcTotalBeds();
@@ -551,6 +561,29 @@ onValue(ref(db, "sections"), (snapshot) => {
 // تم حذف حقول "عدد الغرف" و"عدد الأسرّة لكل غرفة" و"عدد الأسرّة المشغولة"
 // و"الحالة" من الفورم بناءً على طلبك. السجل بقى بس: اسم المالك، رقم الهاتف،
 // عنوان العقار، صورة اختيارية، وملاحظات.
+// وبقى الفورم نفسه جوا مودال بيتفتح بزرار "+" بدل ما يفضل ظاهر طول الوقت.
+function openLedgerFormModal() {
+    const modal = document.getElementById("ledgerFormModal");
+    modal.classList.remove("hidden");
+    modal.classList.add("flex");
+}
+window.openLedgerFormModal = openLedgerFormModal;
+
+function closeLedgerFormModal() {
+    const modal = document.getElementById("ledgerFormModal");
+    modal.classList.add("hidden");
+    modal.classList.remove("flex");
+    resetLedgerForm();
+}
+window.closeLedgerFormModal = closeLedgerFormModal;
+
+function resetLedgerForm() {
+    ["ledger-owner-name","ledger-owner-phone","ledger-property-address","ledger-notes"].forEach(id => {
+        document.getElementById(id).value = "";
+    });
+    removeLedgerImage();
+}
+
 async function addLedgerEntry() {
     const ownerName = document.getElementById("ledger-owner-name").value.trim();
     const ownerPhone = document.getElementById("ledger-owner-phone").value.trim();
@@ -574,12 +607,7 @@ async function addLedgerEntry() {
         const newRef = push(ref(db, "owner_ledger"));
         await set(newRef, data);
         showToast("تم الحفظ في السجل بنجاح", "success");
-        
-        // إعادة تعيين
-        ["ledger-owner-name","ledger-owner-phone","ledger-property-address","ledger-notes"].forEach(id => {
-            document.getElementById(id).value = "";
-        });
-        removeLedgerImage();
+        closeLedgerFormModal();
     } catch (err) {
         showToast("فشل الحفظ: " + err.message, "error");
     }
