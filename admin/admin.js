@@ -9,10 +9,6 @@ let allSections = [];
 let allHousings = [];
 let allLedgerEntries = [];
 
-// ========== حماية لوحة الإدارة بتسجيل دخول ==========
-// اللوحة كانت من غير أي تسجيل دخول خالص، وكانت بتعتمد بس على إن حد محدش يعرف
-// اللينك. دلوقتي محدش يقدر يشوف أو يعدّل أي حاجة من غير حساب أدمن مسجّل فعليًا
-// في Firebase Authentication ومضاف كمان في عقدة "admins" بقاعدة البيانات.
 const loginScreen = document.getElementById("adminLoginScreen");
 const dashboardWrapper = document.getElementById("adminDashboardWrapper");
 const loginErrorEl = document.getElementById("adminLoginError");
@@ -47,7 +43,6 @@ onAuthStateChanged(auth, async (user) => {
         }
         showAdminDashboard();
     } catch (err) {
-        // لو قاعدة البيانات مرفوضة القراءة حتى للتحقق من صلاحية الأدمن
         showAdminLoginScreen("تعذّر التحقق من صلاحياتك، حاول تاني");
     }
 });
@@ -68,7 +63,6 @@ async function adminLogin() {
 
     try {
         await signInWithEmailAndPassword(auth, email, password);
-        // onAuthStateChanged هيتكفل بعرض اللوحة تلقائيًا لو الحساب مصرّح له
     } catch (err) {
         loginErrorEl.textContent = "البريد الإلكتروني أو كلمة المرور غير صحيحة";
         loginErrorEl.classList.remove("hidden");
@@ -249,20 +243,6 @@ housingForm?.addEventListener("submit", async (e) => {
         return;
     }
 
-    // توليد الأسرّة
-    // ------------------------------------------------------------------
-    // مشكلة كانت موجودة: كل مرة تعدّل بيانات سكن (حتى لو مجرد تغيير السعر)،
-    // الكود كان بيعيد بناء مصفوفة الأسرّة من الصفر بالاعتماد على رقم
-    // "الأسرّة المشغولة" اللي بتكتبه يدويًا في الفورم. المشكلة إن لما عميل
-    // يحجز سرير معيّن ويوافق الأدمن عليه، السرير ده بياخد status: "occupied"
-    // في قاعدة البيانات مباشرة (من غير ما يزوّد رقم "الأسرّة المشغولة" في
-    // بيانات السكن نفسه). فلو الأدمن رجع بعد كده وعدّل السكن من غير ما يفتكر
-    // يزوّد الرقم يدويًا، الحفظ كان بيمسح حجز العميل الحقيقي ويرجّع السرير
-    // "متاح" تاني، أو يحجز سرير تاني غلط بدل السرير اللي اتحجز فعليًا.
-    //
-    // الحل: لو السكن موجود من قبل (تعديل)، بنجيب حالة كل سرير محفوظة فعليًا
-    // ونحافظ عليها زي ما هي. رقم "الأسرّة المشغولة" اليدوي بيتطبق بس على
-    // الأسرّة الجديدة اللي متكنش موجودة قبل كده (لو زودت عدد الغرف/الأسرّة).
     let existingBedsMap = {};
     if (id) {
         const existingBedsSnap = await get(ref(db, `housings/${id}/beds`));
@@ -412,10 +392,6 @@ onValue(ref(db, "housings"), (snapshot) => {
             });
             document.getElementById("occupiedBeds").value = item.occupiedBeds || 0;
 
-            // كان ناقص: تحديد المرافق والخدمات المحفوظة فعليًا للسكن ده وقت فتح
-            // التعديل. من غيره، كل مربعات "المرافق والخدمات" كانت بترجع فاضية
-            // كل مرة تفتح تعديل، فكنت مضطر تعلّم عليها من الأول كل مرة، وأي نسيان
-            // كان بيمسح المرافق المحفوظة فعليًا لما تحفظ.
             const savedAmenities = item.amenities || [];
             document.querySelectorAll(".amenities-check").forEach(chk => {
                 chk.checked = savedAmenities.includes(chk.value);
@@ -558,10 +534,6 @@ onValue(ref(db, "sections"), (snapshot) => {
 });
 
 // ========== سجل الملاك (يدوي) ==========
-// تم حذف حقول "عدد الغرف" و"عدد الأسرّة لكل غرفة" و"عدد الأسرّة المشغولة"
-// و"الحالة" من الفورم بناءً على طلبك. السجل بقى بس: اسم المالك، رقم الهاتف،
-// عنوان العقار، صورة اختيارية، وملاحظات.
-// وبقى الفورم نفسه جوا مودال بيتفتح بزرار "+" بدل ما يفضل ظاهر طول الوقت.
 function openLedgerFormModal() {
     const modal = document.getElementById("ledgerFormModal");
     modal.classList.remove("hidden");
@@ -620,7 +592,6 @@ onValue(ref(db, "owner_ledger"), (snapshot) => {
     const data = snapshot.val();
     allLedgerEntries = data ? Object.entries(data).map(([id, val]) => ({ id, ...val })) : [];
 
-    // الترتيب بقى بالأحدث فقط (اتشالت حقول الحالة/الأسرّة من السجل بناءً على طلبك)
     const sorted = [...allLedgerEntries].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
 
     if (sorted.length === 0) {
