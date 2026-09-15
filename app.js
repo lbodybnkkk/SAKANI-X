@@ -7,7 +7,7 @@ import {
 } from "./auth.js";
 import { 
     listenToHousings, listenToSections,
-    toggleFavorite, listenToFavorites 
+    toggleFavorite, listenToFavorites, listenToLatestBooking
 } from "./data-service.js";
 
 let allHousings = [];
@@ -23,11 +23,13 @@ auth.onAuthStateChanged((user) => {
     if (user) {
         listenToFavorites(user.uid, (favs) => {
             userFavorites = favs;
+            window.userFavorites = favs;
             applyFiltersAndRender();
         });
         checkLatestBooking(user.uid);
     } else {
         userFavorites = [];
+        window.userFavorites = [];
         applyFiltersAndRender();
     }
 });
@@ -55,6 +57,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 section: h.section || "",
                 createdAt: h.createdAt || 0
             }));
+            window.allHousings = allHousings;
             applyFiltersAndRender();
             renderSections();
         });
@@ -234,22 +237,14 @@ function setFilter(type, btnElement) {
 }
 
 function checkLatestBooking(userId) {
-    const bookingsRef = ref(db, "bookings");
-    onValue(bookingsRef, (snapshot) => {
-        const data = snapshot.val();
-        if (!data) return;
-        
-        const userBookings = Object.entries(data)
-            .filter(([_, v]) => v.userId === userId)
-            .map(([id, val]) => ({ id, ...val }))
-            .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-        
-        const latest = userBookings[0];
+    // كان بيسحب عقدة "bookings" كاملة (كل حجوزات كل المستخدمين) ويفلتر في المتصفح.
+    // دلوقتي بيستخدم استعلام مباشر بيرجع بس حجوزات اليوزر ده (أسرع وأخصوصية).
+    listenToLatestBooking(userId, (latest) => {
         if (!latest) return;
-        
+
         const dismissed = localStorage.getItem(`dismissed_booking_${latest.id}`);
         if (dismissed === "true") return;
-        
+
         if (latest.status === "pending" || latest.status === "approved") {
             showBookingNotification(latest);
         }
@@ -416,3 +411,4 @@ window.dismissForever = dismissForever;
 window.goToBookings = goToBookings;
 window.allHousings = allHousings;
 window.userFavorites = userFavorites;
+window.renderCard = renderCard;
