@@ -1,10 +1,88 @@
-import { db, ref, push, set, onValue, remove, update, get } from "../firebase-config.js";
+import { 
+    db, ref, push, set, onValue, remove, update, get,
+    auth, signInWithEmailAndPassword, onAuthStateChanged, signOut
+} from "../firebase-config.js";
 
 let uploadedImagesBase64 = [];
 let ledgerImageBase64 = "";
 let allSections = [];
 let allHousings = [];
 let allLedgerEntries = [];
+
+// ========== حماية لوحة الإدارة بتسجيل دخول ==========
+// اللوحة كانت من غير أي تسجيل دخول خالص، وكانت بتعتمد بس على إن حد محدش يعرف
+// اللينك. دلوقتي محدش يقدر يشوف أو يعدّل أي حاجة من غير حساب أدمن مسجّل فعليًا
+// في Firebase Authentication ومضاف كمان في عقدة "admins" بقاعدة البيانات.
+const loginScreen = document.getElementById("adminLoginScreen");
+const dashboardWrapper = document.getElementById("adminDashboardWrapper");
+const loginErrorEl = document.getElementById("adminLoginError");
+
+function showAdminLoginScreen(errorMsg) {
+    loginScreen.classList.remove("hidden");
+    dashboardWrapper.classList.add("hidden");
+    if (errorMsg) {
+        loginErrorEl.textContent = errorMsg;
+        loginErrorEl.classList.remove("hidden");
+    } else {
+        loginErrorEl.classList.add("hidden");
+    }
+}
+
+function showAdminDashboard() {
+    loginScreen.classList.add("hidden");
+    dashboardWrapper.classList.remove("hidden");
+}
+
+onAuthStateChanged(auth, async (user) => {
+    if (!user) {
+        showAdminLoginScreen();
+        return;
+    }
+    try {
+        const adminSnap = await get(ref(db, `admins/${user.uid}`));
+        if (!adminSnap.exists()) {
+            await signOut(auth);
+            showAdminLoginScreen("هذا الحساب غير مصرّح له بالدخول للوحة الإدارة");
+            return;
+        }
+        showAdminDashboard();
+    } catch (err) {
+        // لو قاعدة البيانات مرفوضة القراءة حتى للتحقق من صلاحية الأدمن
+        showAdminLoginScreen("تعذّر التحقق من صلاحياتك، حاول تاني");
+    }
+});
+
+async function adminLogin() {
+    const email = document.getElementById("adminEmail").value.trim();
+    const password = document.getElementById("adminPassword").value;
+
+    if (!email || !password) {
+        loginErrorEl.textContent = "أدخل البريد الإلكتروني وكلمة المرور";
+        loginErrorEl.classList.remove("hidden");
+        return;
+    }
+
+    const btn = document.getElementById("adminLoginBtn");
+    btn.disabled = true;
+    btn.innerText = "جاري الدخول...";
+
+    try {
+        await signInWithEmailAndPassword(auth, email, password);
+        // onAuthStateChanged هيتكفل بعرض اللوحة تلقائيًا لو الحساب مصرّح له
+    } catch (err) {
+        loginErrorEl.textContent = "البريد الإلكتروني أو كلمة المرور غير صحيحة";
+        loginErrorEl.classList.remove("hidden");
+    } finally {
+        btn.disabled = false;
+        btn.innerText = "دخول";
+    }
+}
+window.adminLogin = adminLogin;
+
+function adminLogout() {
+    signOut(auth);
+}
+window.adminLogout = adminLogout;
 
 document.querySelectorAll(".nav-btn").forEach(btn => {
     btn.addEventListener("click", () => {
