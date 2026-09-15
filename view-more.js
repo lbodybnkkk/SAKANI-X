@@ -1,5 +1,5 @@
 import { auth } from "./firebase-config.js";
-import { listenToHousings, listenToSections } from "./data-service.js";
+import { listenToHousings, listenToSections, listenToFavorites, toggleFavorite } from "./data-service.js";
 import { showToast, onAuthStateChanged } from "./auth.js";
 
 let allHousings = [];
@@ -11,12 +11,13 @@ let currentSectionId = null;
 onAuthStateChanged(auth, (user) => {
     currentUser = user;
     if (user) {
-        import("./data-service.js").then(({ listenToFavorites }) => {
-            listenToFavorites(user.uid, (favs) => {
-                userFavorites = favs;
-                renderViewMore();
-            });
+        listenToFavorites(user.uid, (favs) => {
+            userFavorites = favs;
+            renderViewMore();
         });
+    } else {
+        userFavorites = [];
+        renderViewMore();
     }
 });
 
@@ -105,7 +106,7 @@ function renderViewMore() {
                 <div class="absolute top-3 right-3 left-3 flex justify-between items-center">
                     <span class="text-white text-xs font-bold px-3 py-1 rounded-full backdrop-blur-sm ${genderClass}">${genderLabel}</span>
                     <button class="w-9 h-9 rounded-full bg-white/90 flex items-center justify-center shadow-md transition-transform active:scale-90 ${isFav ? 'text-red-500' : 'text-slate-700'}" 
-                            onclick="event.preventDefault(); event.stopPropagation(); window.handleFavToggle && window.handleFavToggle('${item.id}', this);">
+                            onclick="event.preventDefault(); event.stopPropagation(); window.handleFavToggle('${item.id}', this);">
                         <i class="fa-${isFav ? 'solid' : 'regular'} fa-heart"></i>
                     </button>
                 </div>
@@ -142,5 +143,22 @@ function setViewMoreFilter(type, btnElement) {
     renderViewMore();
 }
 
+// كان الزرار ده بينادي على window.handleFavToggle اللي معرّفة بس في app.js،
+// وصفحة "عرض المزيد" مش بتحمّل app.js خالص، فالزرار كان بيعمل لا حاجة نهائيًا.
+// دلوقتي بقى عنده تنفيذ خاص بيه في نفس الملف.
+async function handleFavToggle(housingId, btnEl) {
+    if (!currentUser) {
+        showToast("سجّل دخولك أولاً لإضافة المفضلة", "info");
+        setTimeout(() => window.location.href = "index.html", 1200);
+        return;
+    }
+    const isNowFav = await toggleFavorite(currentUser.uid, housingId);
+    btnEl.classList.toggle('text-red-500', isNowFav);
+    btnEl.classList.toggle('text-slate-700', !isNowFav);
+    btnEl.querySelector('i').className = `fa-${isNowFav ? 'solid' : 'regular'} fa-heart`;
+    showToast(isNowFav ? "تمت الإضافة للمفضلة" : "تمت الإزالة من المفضلة", "success");
+}
+
 window.filterViewMore = filterViewMore;
 window.setViewMoreFilter = setViewMoreFilter;
+window.handleFavToggle = handleFavToggle;
