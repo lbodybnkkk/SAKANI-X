@@ -31,6 +31,17 @@ async function loadProfile() {
         document.getElementById("pfCity").value = p.city || "";
         document.getElementById("pfUniversity").value = p.university || "";
 
+        // كانت المحافظة المحفوظة بتتخزن في الحقل المخفي بس مش بتتعرض في الزرار
+        // (كان لسه شكله "اختر المحافظة..." حتى لو فعلاً محفوظة محافظة قبل كده)
+        if (p.governorate) {
+            const selectedLabel = document.getElementById("selectedGovernorate");
+            if (selectedLabel) {
+                selectedLabel.innerText = p.governorate;
+                selectedLabel.classList.remove("text-slate-400");
+                selectedLabel.classList.add("text-slate-900", "font-bold");
+            }
+        }
+
         if (p.name && p.phone && p.governorate) {
             const badge = document.getElementById("profileBadge");
             badge.style.background = "rgba(16, 185, 129, 0.15)";
@@ -48,7 +59,7 @@ async function saveProfile() {
     const university = document.getElementById("pfUniversity").value.trim();
 
     if (!name || name.length < 3) return showToast("👤 برجاء إدخال اسمك الكامل (3 أحرف على الأقل)", "error");
-    if (!/^01[0-2,5]\d{8}$/.test(phone)) return showToast("📱 رقم هاتف مصري غير صحيح (مثال: 01012345678)", "error");
+    if (!/^01[0125]\d{8}$/.test(phone)) return showToast("📱 رقم هاتف مصري غير صحيح (مثال: 01012345678)", "error");
     if (!governorate) return showToast("📍 برجاء اختيار المحافظة", "error");
 
     const btn = document.getElementById("saveProfileBtn");
