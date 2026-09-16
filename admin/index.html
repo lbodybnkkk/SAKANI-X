@@ -17,7 +17,7 @@
         .toast-success { background: #10b981; color: #fff; }
         .toast-error { background: #ef4444; color: #fff; }
         .toast-info { background: #6366f1; color: #fff; }
-        #housing-location-map { height: 220px; border-radius: 14px; overflow: hidden; }
+        #locationPickerMap { border-radius: 14px; }
         .leaflet-control-attribution { font-size: 9px !important; }
     </style>
 </head>
@@ -36,7 +36,7 @@
             <div class="flex flex-col gap-3 text-right">
                 <div class="flex flex-col gap-1.5">
                     <label class="text-xs font-semibold text-slate-400">البريد الإلكتروني</label>
-                    <input type="email" id="adminEmail" class="bg-[#0f172a] border border-slate-700 rounded-xl px-4 py-3 text-sm outline-none focus:border-indigo-500" placeholder="admin@example.com">
+                    <input type="email" id="adminEmail" class="bg-[#0f172a] border border-slate-700 rounded-xl px-4 py-3 text-sm outline-none focus:border-indigo-500" placeholder="المطور CMD">
                 </div>
                 <div class="flex flex-col gap-1.5">
                     <label class="text-xs font-semibold text-slate-400">كلمة المرور</label>
@@ -137,20 +137,19 @@
                         <input type="text" id="address" class="bg-[#0f172a] border border-slate-700 rounded-xl px-4 py-3 text-sm outline-none focus:border-indigo-500" placeholder="اسم الشارع - الميدان" required>
                     </div>
                     <div class="flex flex-col gap-1.5 md:col-span-2">
-                        <label class="text-xs md:text-sm font-semibold text-slate-400">
-                            <i class="fa-solid fa-location-dot text-rose-400"></i> حدد موقع السكن على الخريطة (دوس على المكان الصح)
-                        </label>
-                        <div id="housing-location-map"></div>
-                        <div class="flex items-center justify-between mt-1">
-                            <p class="text-[11px] text-slate-500">
-                                <i class="fa-solid fa-circle-info"></i> الدبوس دلوقتي على: <span id="locationPreview">لسه مختارش موقع</span>
-                            </p>
-                            <button type="button" onclick="useMyCurrentLocation()" class="text-[11px] font-bold text-indigo-400 hover:text-indigo-300">
-                                <i class="fa-solid fa-crosshairs"></i> استخدم موقعي الحالي
-                            </button>
-                        </div>
+                        <label class="text-xs md:text-sm font-semibold text-slate-400">موقع السكن والجامعة على الخريطة</label>
+                        <button type="button" onclick="openLocationPickerModal()" class="flex items-center justify-between bg-[#0f172a] border border-slate-700 hover:border-indigo-500 rounded-xl px-4 py-3 text-sm transition-all">
+                            <span class="flex items-center gap-2 text-slate-300 font-bold">
+                                <i class="fa-solid fa-map-location-dot text-indigo-400"></i> تحديد الخريطة
+                            </span>
+                            <span id="locationStatusBadge" class="text-[11px] font-bold text-rose-400">
+                                <i class="fa-solid fa-circle-exclamation"></i> لسه محددتش الموقع
+                            </span>
+                        </button>
                         <input type="hidden" id="housing-lat">
                         <input type="hidden" id="housing-lng">
+                        <input type="hidden" id="university-lat">
+                        <input type="hidden" id="university-lng">
                     </div>
                     <div class="flex flex-col gap-1.5">
                         <label class="text-xs md:text-sm font-semibold text-slate-400">نوع السكن</label>
@@ -357,6 +356,51 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4" id="ownerLedgerContainer"></div>
     </section>
 </main>
+
+<div id="locationPickerModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-[2500] hidden items-center justify-center p-4">
+    <div class="glass rounded-2xl p-5 max-w-xl w-full max-h-[92vh] overflow-y-auto">
+        <div class="flex justify-between items-center mb-1">
+            <h3 class="text-lg font-extrabold flex items-center gap-2">
+                <i class="fa-solid fa-map-location-dot text-indigo-400"></i> تحديد الموقع على الخريطة
+            </h3>
+            <button onclick="closeLocationPickerModal()" class="text-slate-400 hover:text-white text-xl"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <p class="text-xs md:text-sm text-slate-400 mb-4">اختر نوع الدبوس، ثم دوس على الخريطة أو ابحث عن مكان</p>
+
+        <div class="flex gap-2 mb-3">
+            <button type="button" id="pinTypeHousingBtn" onclick="setActivePinType('housing')" class="flex-1 py-2.5 rounded-xl text-xs font-bold border transition-all bg-rose-500/20 text-rose-400 border-rose-500/40">
+                <i class="fa-solid fa-house"></i> دبوس السكن
+            </button>
+            <button type="button" id="pinTypeUniversityBtn" onclick="setActivePinType('university')" class="flex-1 py-2.5 rounded-xl text-xs font-bold border transition-all bg-[#0f172a] text-slate-400 border-slate-700">
+                <i class="fa-solid fa-graduation-cap"></i> دبوس الجامعة
+            </button>
+        </div>
+
+        <div class="relative mb-3">
+            <input type="text" id="locationSearchInput" placeholder="ابحث عن مكان (مثال: جامعة المنيا)" class="w-full bg-[#0f172a] border border-slate-700 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-indigo-500 pl-10">
+            <button type="button" onclick="searchLocation()" class="absolute left-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-lg bg-indigo-600 hover:bg-indigo-500 flex items-center justify-center">
+                <i class="fa-solid fa-magnifying-glass text-xs"></i>
+            </button>
+            <div id="locationSearchResults" class="absolute top-full right-0 left-0 mt-1 bg-[#0f172a] border border-slate-700 rounded-xl overflow-hidden z-10 hidden max-h-48 overflow-y-auto"></div>
+        </div>
+
+        <div id="locationPickerMap" style="height: 280px; border-radius: 14px; overflow: hidden;"></div>
+
+        <div class="flex items-center justify-between mt-3 mb-4">
+            <div class="text-[11px] text-slate-400 space-y-1">
+                <p><i class="fa-solid fa-house text-rose-400"></i> السكن: <span id="housingCoordPreview">غير محدد</span></p>
+                <p><i class="fa-solid fa-graduation-cap text-emerald-400"></i> الجامعة: <span id="universityCoordPreview">غير محدد (اختياري)</span></p>
+            </div>
+            <button type="button" onclick="useMyCurrentLocation()" class="text-[11px] font-bold text-indigo-400 hover:text-indigo-300 whitespace-nowrap">
+                <i class="fa-solid fa-crosshairs"></i> موقعي الحالي
+            </button>
+        </div>
+
+        <button type="button" onclick="confirmLocationPicker()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-xl text-sm transition-all">
+            <i class="fa-solid fa-check"></i> تأكيد الموقع
+        </button>
+    </div>
+</div>
 
 <div id="ledgerFormModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-[2000] hidden items-center justify-center p-4">
     <div class="glass rounded-2xl p-6 max-w-lg w-full max-h-[88vh] overflow-y-auto">
