@@ -198,18 +198,39 @@ function calcTotalBeds() {
 window.calcTotalBeds = calcTotalBeds;
 
 // ========== رفع الصور للسكن ==========
-async function compressImageToBase64(file, maxW = 1000, quality = 0.75) {
+async function compressImageToBase64(file, maxW = 800, maxH = 800, quality = 0.7) {
     return new Promise((resolve, reject) => {
+        if (!file || !file.type.startsWith("image/")) {
+            reject(new Error("الملف المحدد ليس صورة صالحة."));
+            return;
+        }
         const reader = new FileReader();
         reader.onload = (e) => {
             const img = new Image();
             img.onload = () => {
                 const canvas = document.createElement("canvas");
                 let w = img.width, h = img.height;
-                if (w > maxW) { h = (maxW / w) * h; w = maxW; }
-                canvas.width = w; canvas.height = h;
+
+                // تصغير حسب العرض أو الطول (أيهما أكبر)
+                if (w > h) {
+                    if (w > maxW) { h = Math.round((h * maxW) / w); w = maxW; }
+                } else {
+                    if (h > maxH) { w = Math.round((w * maxH) / h); h = maxH; }
+                }
+
+                canvas.width = w;
+                canvas.height = h;
                 canvas.getContext("2d").drawImage(img, 0, 0, w, h);
-                resolve(canvas.toDataURL("image/jpeg", quality));
+
+                const base64 = canvas.toDataURL("image/jpeg", quality);
+
+                // تحذير لو الصورة لسه كبيرة (اختياري)
+                const sizeKB = (base64.length * 3) / 4 / 1024;
+                if (sizeKB > 300) {
+                    console.warn(` حجم الصورة بعد الضغط: ${sizeKB.toFixed(0)}KB`);
+                }
+
+                resolve(base64);
             };
             img.onerror = reject;
             img.src = e.target.result;
