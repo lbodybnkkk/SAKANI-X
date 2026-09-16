@@ -147,6 +147,10 @@
     <script type="module" src="app.js"></script>
     <script>
         function showFavoritesView() {
+            if (!window.isLoggedIn) {
+                window.toggleAuthModal(true);
+                return;
+            }
             const favItems = window.userFavorites 
                 ? window.allHousings.filter(h => window.userFavorites.includes(h.id))
                 : [];
@@ -169,9 +173,17 @@
                 });
             }
 
-            
+            if (window.location.hash === "#login") {
+                const waitForAuth = setInterval(() => {
+                    if (window.toggleAuthModal) {
+                        clearInterval(waitForAuth);
+                        window.toggleAuthModal(true);
+                    }
+                }, 150);
+                setTimeout(() => clearInterval(waitForAuth), 5000);
+            }
+
             if (window.location.hash === "#favorites") {
-                // بستنى شوية لحد ما app.js يجيب بيانات الوحدات والمفضلة من فايربيز
                 const waitForData = setInterval(() => {
                     if (window.allHousings && window.allHousings.length > 0) {
                         clearInterval(waitForData);
