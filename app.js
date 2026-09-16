@@ -17,9 +17,11 @@ let userFavorites = [];
 let selectedBedId = null;
 let isSignUpMode = false;
 let activeFilter = "all";
+let housingsLoaded = false;
 
 auth.onAuthStateChanged((user) => {
     currentUser = user;
+    window.isLoggedIn = !!user;
     if (user) {
         listenToFavorites(user.uid, (favs) => {
             userFavorites = favs;
@@ -37,6 +39,7 @@ auth.onAuthStateChanged((user) => {
 document.addEventListener("DOMContentLoaded", () => {
     const container = document.getElementById("listingsContainer");
     if (container) {
+        container.innerHTML = renderSkeletonCards();
         listenToHousings((housings) => {
             allHousings = housings.map(h => ({
                 id: h.id,
@@ -57,6 +60,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 section: h.section || "",
                 createdAt: h.createdAt || 0
             }));
+            housingsLoaded = true;
             window.allHousings = allHousings;
             applyFiltersAndRender();
             renderSections();
@@ -132,9 +136,22 @@ function renderCard(item) {
     </a>`;
 }
 
+function renderSkeletonCards() {
+    return Array(4).fill(0).map(() => `
+        <div class="bg-white rounded-2xl overflow-hidden shadow-lg border border-slate-100 animate-pulse">
+            <div class="h-52 bg-slate-200"></div>
+            <div class="p-4 space-y-3">
+                <div class="h-4 bg-slate-200 rounded w-1/3"></div>
+                <div class="h-4 bg-slate-200 rounded w-2/3"></div>
+                <div class="h-3 bg-slate-200 rounded w-1/2"></div>
+            </div>
+        </div>`).join('');
+}
+
 function renderListings(items) {
     const container = document.getElementById("listingsContainer");
     if (!container) return;
+    if (!housingsLoaded) return;
 
     // هل يوجد وحدات داخل الأقسام بعد الفلترة؟
     const filteredList = window._activeFilteredList || [];
@@ -237,8 +254,6 @@ function setFilter(type, btnElement) {
 }
 
 function checkLatestBooking(userId) {
-    // كان بيسحب عقدة "bookings" كاملة (كل حجوزات كل المستخدمين) ويفلتر في المتصفح.
-    // دلوقتي بيستخدم استعلام مباشر بيرجع بس حجوزات اليوزر ده (أسرع وأخصوصية).
     listenToLatestBooking(userId, (latest) => {
         if (!latest) return;
 
