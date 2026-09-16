@@ -6,6 +6,7 @@
     <title>SAKANI X | لوحة الإدارة</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         * { font-family: 'Cairo', sans-serif; }
@@ -16,6 +17,8 @@
         .toast-success { background: #10b981; color: #fff; }
         .toast-error { background: #ef4444; color: #fff; }
         .toast-info { background: #6366f1; color: #fff; }
+        #housing-location-map { height: 220px; border-radius: 14px; overflow: hidden; }
+        .leaflet-control-attribution { font-size: 9px !important; }
     </style>
 </head>
 <body class="min-h-screen flex">
@@ -132,6 +135,22 @@
                     <div class="flex flex-col gap-1.5">
                         <label class="text-xs md:text-sm font-semibold text-slate-400">العنوان بالتفصيل</label>
                         <input type="text" id="address" class="bg-[#0f172a] border border-slate-700 rounded-xl px-4 py-3 text-sm outline-none focus:border-indigo-500" placeholder="اسم الشارع - الميدان" required>
+                    </div>
+                    <div class="flex flex-col gap-1.5 md:col-span-2">
+                        <label class="text-xs md:text-sm font-semibold text-slate-400">
+                            <i class="fa-solid fa-location-dot text-rose-400"></i> حدد موقع السكن على الخريطة (دوس على المكان الصح)
+                        </label>
+                        <div id="housing-location-map"></div>
+                        <div class="flex items-center justify-between mt-1">
+                            <p class="text-[11px] text-slate-500">
+                                <i class="fa-solid fa-circle-info"></i> الدبوس دلوقتي على: <span id="locationPreview">لسه مختارش موقع</span>
+                            </p>
+                            <button type="button" onclick="useMyCurrentLocation()" class="text-[11px] font-bold text-indigo-400 hover:text-indigo-300">
+                                <i class="fa-solid fa-crosshairs"></i> استخدم موقعي الحالي
+                            </button>
+                        </div>
+                        <input type="hidden" id="housing-lat">
+                        <input type="hidden" id="housing-lng">
                     </div>
                     <div class="flex flex-col gap-1.5">
                         <label class="text-xs md:text-sm font-semibold text-slate-400">نوع السكن</label>
@@ -402,6 +421,7 @@
 
     </div>
 
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script type="module" src="admin.js"></script>
 </body>
 </html>
