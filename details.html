@@ -46,8 +46,17 @@
 
         <hr style="border: none; border-top: 1px solid var(--border-color); margin: 20px 0;" />
 
-        <h4 style="font-size: 16px; font-weight: 700; margin-bottom: 10px;">الموقع الجغرافي</h4>
-        <div id="propertyMap" style="height: 200px; border-radius: var(--radius-md); overflow: hidden; box-shadow: var(--shadow-sm); background: #f1f5f9;"></div>
+        <div class="map-card">
+            <div class="map-card-header">
+                <div class="map-card-icon"><i class="fa-solid fa-location-dot"></i></div>
+                <div>
+                    <h4 class="map-card-title">الموقع الجغرافي</h4>
+                    <p class="map-card-subtitle">موقع الوحدة التقريبي على الخريطة</p>
+                </div>
+            </div>
+            <div id="propertyMap" class="map-card-frame"></div>
+            <div id="mapLegend" class="map-card-legend"></div>
+        </div>
 
         <hr style="border: none; border-top: 1px solid var(--border-color); margin: 20px 0;" />
 
