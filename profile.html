@@ -101,26 +101,145 @@
             pointer-events: none;
         }
         .dev-cmd-card {
-            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-            border-radius: 20px;
-            padding: 22px;
+            position: relative;
+            background: linear-gradient(155deg, #0b1120 0%, #131f35 55%, #1c2b47 100%);
+            border-radius: 22px;
+            padding: 26px 24px;
             margin-top: 24px;
             color: #fff;
+            overflow: hidden;
+            border: 1px solid rgba(197, 155, 39, 0.25);
+            box-shadow: 0 20px 45px -15px rgba(0, 0, 0, 0.5);
+        }
+        .dev-cmd-card::before {
+            content: "";
+            position: absolute;
+            top: -60px;
+            left: -40px;
+            width: 180px;
+            height: 180px;
+            background: radial-gradient(circle, rgba(197, 155, 39, 0.25) 0%, transparent 70%);
+            pointer-events: none;
+        }
+        .dev-cmd-top {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 18px;
+            position: relative;
         }
         .dev-cmd-avatar {
-            width: 56px;
-            height: 56px;
-            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            border-radius: 16px;
             background: linear-gradient(135deg, #c59b27, #e6b84a);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 20px;
-            font-weight: 900;
+            font-size: 24px;
             color: #0f172a;
-            letter-spacing: 1px;
-            box-shadow: 0 4px 12px rgba(197, 155, 39, 0.3);
+            box-shadow: 0 8px 20px rgba(197, 155, 39, 0.35);
+            flex-shrink: 0;
         }
+        .dev-cmd-name-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .dev-cmd-verified {
+            color: #c59b27;
+            font-size: 13px;
+        }
+        .dev-cmd-role {
+            display: inline-block;
+            font-size: 11px;
+            font-weight: 700;
+            color: #c59b27;
+            background: rgba(197, 155, 39, 0.12);
+            border: 1px solid rgba(197, 155, 39, 0.3);
+            padding: 3px 10px;
+            border-radius: 999px;
+            margin-top: 6px;
+        }
+        .dev-cmd-desc {
+            font-size: 13px;
+            color: #cbd5e1;
+            line-height: 1.9;
+            margin: 0 0 18px 0;
+            position: relative;
+        }
+        .dev-cmd-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: linear-gradient(135deg, #229ed9, #0088cc);
+            color: #fff;
+            padding: 11px 22px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 700;
+            text-decoration: none;
+            box-shadow: 0 8px 20px rgba(0, 136, 204, 0.3);
+            transition: transform 0.2s ease;
+        }
+        .dev-cmd-btn:active { transform: scale(0.97); }
+
+        /* Logout confirm + loading overlays */
+        .logout-confirm-overlay {
+            position: fixed; inset: 0; z-index: 9000;
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(6px);
+            display: flex; align-items: center; justify-content: center;
+            padding: 20px;
+        }
+        .logout-confirm-card {
+            background: #fff; border-radius: 22px; padding: 30px 26px;
+            max-width: 340px; width: 100%; text-align: center;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.3);
+        }
+        .logout-confirm-logo {
+            width: 58px; height: 58px; border-radius: 16px; margin: 0 auto 14px;
+            background: linear-gradient(135deg, #0f172a, #1e293b);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 24px; color: var(--accent-gold);
+        }
+        .logout-confirm-card h3 { font-size: 18px; font-weight: 800; margin: 0 0 6px; color: var(--text-dark); }
+        .logout-confirm-card h3 span { color: var(--accent-gold); }
+        .logout-confirm-card p { font-size: 14px; color: var(--text-muted); margin: 0 0 22px; }
+        .logout-confirm-actions { display: flex; gap: 10px; }
+        .logout-confirm-yes, .logout-confirm-no {
+            flex: 1; border: none; padding: 13px; border-radius: 12px;
+            font-weight: 700; font-size: 14px; font-family: inherit; cursor: pointer;
+        }
+        .logout-confirm-yes { background: var(--danger); color: #fff; }
+        .logout-confirm-no { background: #f1f5f9; color: var(--text-dark); }
+
+        .logout-loading-overlay {
+            position: fixed; inset: 0; z-index: 9500;
+            background: linear-gradient(155deg, #0b1120 0%, #131f35 100%);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
+        .logout-loading-logo {
+            width: 66px; height: 66px; border-radius: 18px; margin-bottom: 16px;
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 28px; color: var(--accent-gold);
+            box-shadow: 0 10px 30px rgba(197,155,39,0.25);
+        }
+        .logout-loading-overlay h2 { color: #fff; font-size: 21px; font-weight: 800; margin: 0 0 4px; }
+        .logout-loading-overlay h2 span { color: var(--accent-gold); }
+        .logout-loading-overlay p { color: #94a3b8; font-size: 13px; margin: 0 0 22px; }
+        .logout-progress-track {
+            width: 170px; height: 4px; background: rgba(255,255,255,0.15);
+            border-radius: 4px; overflow: hidden;
+        }
+        .logout-progress-fill {
+            height: 100%; width: 0%; background: var(--accent-gold);
+            border-radius: 4px; transition: width 1.8s linear;
+        }
+
+        body { visibility: hidden; }
+        body.profile-ready { visibility: visible; }
     </style>
 </head>
 <body>
@@ -198,19 +317,24 @@
         </div>
 
         <div class="dev-cmd-card">
-            <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 16px;">
-                <div class="dev-cmd-avatar"></div>
+            <div class="dev-cmd-top">
+                <div class="dev-cmd-avatar">
+                    <i class="fa-solid fa-code"></i>
+                </div>
                 <div>
-                    <h3 style="font-size: 17px; font-weight: 800; margin: 0;">المطور CMD</h3>
-                    <p style="font-size: 12px; color: #94a3b8; margin: 2px 0 0 0;">Full-Stack & UI/UX Engineer</p>
+                    <div class="dev-cmd-name-row">
+                        <h3 style="font-size: 17px; font-weight: 800; margin: 0;">المطور CMD</h3>
+                        <i class="fa-solid fa-circle-check dev-cmd-verified"></i>
+                    </div>
+                    <p style="font-size: 12px; color: #94a3b8; margin: 3px 0 0 0;">Full-Stack & UI/UX Engineer</p>
+                    <span class="dev-cmd-role"><i class="fa-solid fa-bolt"></i> متاح للتطوير</span>
                 </div>
             </div>
-            <p style="font-size: 13px; color: #cbd5e1; line-height: 1.8; margin: 0 0 16px 0;">
+            <p class="dev-cmd-desc">
                 مطور متخصص في بناء المنصات الرقمية وتطوير واجهات المستخدم. أعمل على تقديم حلول برمجية متكاملة بجودة عالية وأداء مستقر، مع التركيز على تجربة مستخدم سلسة وتصميم عصري.
             </p>
-            <a href="https://t.me/C_M_D_1" target="_blank" 
-               style="display: inline-flex; align-items: center; gap: 8px; background: #0088cc; color: #fff; padding: 10px 20px; border-radius: 12px; font-size: 13px; font-weight: 700; text-decoration: none; transition: background 0.2s ease;">
-                <i class="fa-brands fa-telegram" style="font-size: 15px;"></i>
+            <a href="https://t.me/C_M_D_1" target="_blank" class="dev-cmd-btn">
+                <i class="fa-brands fa-telegram"></i>
                 تواصل تليجرام
             </a>
         </div>
