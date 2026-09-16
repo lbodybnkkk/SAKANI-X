@@ -88,9 +88,6 @@ document.querySelectorAll(".nav-btn").forEach(btn => {
         btn.classList.add("active", "bg-indigo-600", "text-white");
         btn.classList.remove("text-slate-400");
         document.getElementById(btn.dataset.tab).classList.remove("hidden");
-        if (btn.dataset.tab === "add-housing") {
-            setTimeout(() => locationMap?.invalidateSize(), 50);
-        }
     });
 });
 
@@ -129,54 +126,164 @@ function customConfirm(message, onConfirm) {
 
 const DEFAULT_MAP_CENTER = [30.0444, 31.2357];
 let locationMap = null;
-let locationMarker = null;
+let housingMarker = null;
+let universityMarker = null;
+let activePinType = "housing";
 
-function initLocationMap() {
-    if (locationMap || !document.getElementById("housing-location-map")) return;
-    locationMap = L.map("housing-location-map").setView(DEFAULT_MAP_CENTER, 12);
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(locationMap);
-    locationMap.on("click", (e) => setLocationMarker(e.latlng.lat, e.latlng.lng));
-}
+const universityIcon = L.divIcon({
+    html: '<div style="width:30px;height:30px;border-radius:50%;background:#10b981;display:flex;align-items:center;justify-content:center;color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.4);border:2px solid #fff;"><i class="fa-solid fa-graduation-cap" style="font-size:13px;"></i></div>',
+    iconSize: [30, 30],
+    iconAnchor: [15, 15],
+    className: ""
+});
+const housingIcon = L.divIcon({
+    html: '<div style="width:32px;height:32px;border-radius:50% 50% 50% 0;background:#ef4444;transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.4);border:2px solid #fff;"><i class="fa-solid fa-house" style="font-size:12px;color:#fff;transform:rotate(45deg);"></i></div>',
+    iconSize: [32, 32],
+    iconAnchor: [16, 32],
+    className: ""
+});
 
-function setLocationMarker(lat, lng) {
-    if (!locationMap) return;
-    if (locationMarker) {
-        locationMarker.setLatLng([lat, lng]);
+function setActivePinType(type) {
+    activePinType = type;
+    const housingBtn = document.getElementById("pinTypeHousingBtn");
+    const uniBtn = document.getElementById("pinTypeUniversityBtn");
+    if (type === "housing") {
+        housingBtn.className = "flex-1 py-2.5 rounded-xl text-xs font-bold border transition-all bg-rose-500/20 text-rose-400 border-rose-500/40";
+        uniBtn.className = "flex-1 py-2.5 rounded-xl text-xs font-bold border transition-all bg-[#0f172a] text-slate-400 border-slate-700";
     } else {
-        locationMarker = L.marker([lat, lng]).addTo(locationMap);
+        uniBtn.className = "flex-1 py-2.5 rounded-xl text-xs font-bold border transition-all bg-emerald-500/20 text-emerald-400 border-emerald-500/40";
+        housingBtn.className = "flex-1 py-2.5 rounded-xl text-xs font-bold border transition-all bg-[#0f172a] text-slate-400 border-slate-700";
     }
-    locationMap.setView([lat, lng], 15);
-    document.getElementById("housing-lat").value = lat;
-    document.getElementById("housing-lng").value = lng;
-    const preview = document.getElementById("locationPreview");
-    if (preview) preview.innerText = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
 }
+window.setActivePinType = setActivePinType;
+
+function initPickerMap() {
+    if (locationMap) return;
+    locationMap = L.map("locationPickerMap").setView(DEFAULT_MAP_CENTER, 12);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(locationMap);
+    locationMap.on("click", (e) => placePin(activePinType, e.latlng.lat, e.latlng.lng));
+}
+
+function placePin(type, lat, lng) {
+    if (type === "housing") {
+        if (housingMarker) housingMarker.setLatLng([lat, lng]);
+        else housingMarker = L.marker([lat, lng], { icon: housingIcon }).addTo(locationMap);
+        document.getElementById("housing-lat").value = lat;
+        document.getElementById("housing-lng").value = lng;
+        document.getElementById("housingCoordPreview").innerText = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+    } else {
+        if (universityMarker) universityMarker.setLatLng([lat, lng]);
+        else universityMarker = L.marker([lat, lng], { icon: universityIcon }).addTo(locationMap);
+        document.getElementById("university-lat").value = lat;
+        document.getElementById("university-lng").value = lng;
+        document.getElementById("universityCoordPreview").innerText = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+    }
+    locationMap.setView([lat, lng], Math.max(locationMap.getZoom(), 14));
+}
+
+function openLocationPickerModal() {
+    const modal = document.getElementById("locationPickerModal");
+    modal.classList.remove("hidden");
+    modal.classList.add("flex");
+    setActivePinType("housing");
+    setTimeout(() => {
+        initPickerMap();
+        locationMap.invalidateSize();
+        const hLat = document.getElementById("housing-lat").value;
+        const hLng = document.getElementById("housing-lng").value;
+        if (hLat && hLng) placePin("housing", Number(hLat), Number(hLng));
+        const uLat = document.getElementById("university-lat").value;
+        const uLng = document.getElementById("university-lng").value;
+        if (uLat && uLng) placePin("university", Number(uLat), Number(uLng));
+    }, 80);
+}
+window.openLocationPickerModal = openLocationPickerModal;
+
+function closeLocationPickerModal() {
+    const modal = document.getElementById("locationPickerModal");
+    modal.classList.add("hidden");
+    modal.classList.remove("flex");
+}
+window.closeLocationPickerModal = closeLocationPickerModal;
+
+function confirmLocationPicker() {
+    if (!document.getElementById("housing-lat").value) {
+        showToast("لازم تحدد موقع السكن على الأقل", "error");
+        return;
+    }
+    updateLocationStatusBadge();
+    closeLocationPickerModal();
+}
+window.confirmLocationPicker = confirmLocationPicker;
+
+function updateLocationStatusBadge() {
+    const badge = document.getElementById("locationStatusBadge");
+    if (!badge) return;
+    const hasHousing = document.getElementById("housing-lat").value;
+    const hasUniversity = document.getElementById("university-lat").value;
+    if (hasHousing && hasUniversity) {
+        badge.className = "text-[11px] font-bold text-emerald-400";
+        badge.innerHTML = `<i class="fa-solid fa-check-circle"></i> السكن والجامعة محددين`;
+    } else if (hasHousing) {
+        badge.className = "text-[11px] font-bold text-amber-400";
+        badge.innerHTML = `<i class="fa-solid fa-check-circle"></i> موقع السكن محدد فقط`;
+    } else {
+        badge.className = "text-[11px] font-bold text-rose-400";
+        badge.innerHTML = `<i class="fa-solid fa-circle-exclamation"></i> لسه محددتش الموقع`;
+    }
+}
+
+async function searchLocation() {
+    const query = document.getElementById("locationSearchInput").value.trim();
+    const resultsBox = document.getElementById("locationSearchResults");
+    if (!query) return;
+    resultsBox.classList.remove("hidden");
+    resultsBox.innerHTML = `<div class="p-3 text-xs text-slate-400"><i class="fa-solid fa-spinner fa-spin"></i> جاري البحث...</div>`;
+    try {
+        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=5&accept-language=ar&q=${encodeURIComponent(query)}`);
+        const data = await res.json();
+        if (!data.length) {
+            resultsBox.innerHTML = `<div class="p-3 text-xs text-slate-400">مفيش نتائج، جرّب اسم مختلف</div>`;
+            return;
+        }
+        resultsBox.innerHTML = data.map((r, i) => `
+            <button type="button" class="search-result-item w-full text-right px-3 py-2.5 text-xs text-slate-300 hover:bg-indigo-600/20 border-b border-slate-800 last:border-0" data-lat="${r.lat}" data-lng="${r.lon}">
+                <i class="fa-solid fa-location-dot text-indigo-400"></i> ${r.display_name}
+            </button>
+        `).join('');
+        resultsBox.querySelectorAll(".search-result-item").forEach(btn => {
+            btn.addEventListener("click", () => {
+                const lat = Number(btn.dataset.lat), lng = Number(btn.dataset.lng);
+                placePin(activePinType, lat, lng);
+                resultsBox.classList.add("hidden");
+            });
+        });
+    } catch (err) {
+        resultsBox.innerHTML = `<div class="p-3 text-xs text-rose-400">تعذّر البحث، جرّب تاني</div>`;
+    }
+}
+window.searchLocation = searchLocation;
 
 function useMyCurrentLocation() {
     if (!navigator.geolocation) return showToast("المتصفح لا يدعم تحديد الموقع", "error");
     showToast("جاري تحديد موقعك...", "info");
     navigator.geolocation.getCurrentPosition(
-        (pos) => setLocationMarker(pos.coords.latitude, pos.coords.longitude),
+        (pos) => placePin(activePinType, pos.coords.latitude, pos.coords.longitude),
         () => showToast("تعذّر الوصول لموقعك، حدد الموقع يدويًا على الخريطة", "error")
     );
 }
 window.useMyCurrentLocation = useMyCurrentLocation;
 
 function resetLocationMap() {
-    document.getElementById("housing-lat").value = "";
-    document.getElementById("housing-lng").value = "";
-    const preview = document.getElementById("locationPreview");
-    if (preview) preview.innerText = "لسه مختارش موقع";
-    if (locationMarker && locationMap) {
-        locationMap.removeLayer(locationMarker);
-        locationMarker = null;
-    }
-    if (locationMap) locationMap.setView(DEFAULT_MAP_CENTER, 12);
+    ["housing-lat", "housing-lng", "university-lat", "university-lng"].forEach(id => {
+        document.getElementById(id).value = "";
+    });
+    if (housingMarker && locationMap) { locationMap.removeLayer(housingMarker); housingMarker = null; }
+    if (universityMarker && locationMap) { locationMap.removeLayer(universityMarker); universityMarker = null; }
+    document.getElementById("housingCoordPreview").innerText = "غير محدد";
+    document.getElementById("universityCoordPreview").innerText = "غير محدد (اختياري)";
+    updateLocationStatusBadge();
 }
-
-document.addEventListener("DOMContentLoaded", () => {
-    setTimeout(initLocationMap, 300);
-});
 
 // ========== حساب الأسرّة تلقائياً ==========
 function calcTotalBeds() {
@@ -211,7 +318,6 @@ async function compressImageToBase64(file, maxW = 800, maxH = 800, quality = 0.7
                 const canvas = document.createElement("canvas");
                 let w = img.width, h = img.height;
 
-                // تصغير حسب العرض أو الطول (أيهما أكبر)
                 if (w > h) {
                     if (w > maxW) { h = Math.round((h * maxW) / w); w = maxW; }
                 } else {
@@ -224,7 +330,6 @@ async function compressImageToBase64(file, maxW = 800, maxH = 800, quality = 0.7
 
                 const base64 = canvas.toDataURL("image/jpeg", quality);
 
-                // تحذير لو الصورة لسه كبيرة (اختياري)
                 const sizeKB = (base64.length * 3) / 4 / 1024;
                 if (sizeKB > 300) {
                     console.warn(` حجم الصورة بعد الضغط: ${sizeKB.toFixed(0)}KB`);
@@ -351,6 +456,8 @@ housingForm?.addEventListener("submit", async (e) => {
         showToast("حدد موقع السكن على الخريطة قبل الحفظ", "error");
         return;
     }
+    const uniLat = document.getElementById("university-lat").value;
+    const uniLng = document.getElementById("university-lng").value;
 
     const data = {
         title: document.getElementById("title").value,
@@ -358,6 +465,8 @@ housingForm?.addEventListener("submit", async (e) => {
         address: document.getElementById("address").value,
         lat: Number(lat),
         lng: Number(lng),
+        universityLat: uniLat ? Number(uniLat) : null,
+        universityLng: uniLng ? Number(uniLng) : null,
         type: document.getElementById("type").value,
         gender: document.getElementById("gender").value,
         section: document.getElementById("section").value,
@@ -485,14 +594,13 @@ onValue(ref(db, "housings"), (snapshot) => {
             uploadedImagesBase64 = item.images || [];
             renderImagePreviews();
             calcTotalBeds();
-            if (item.lat && item.lng) {
-                setTimeout(() => {
-                    locationMap?.invalidateSize();
-                    setLocationMarker(item.lat, item.lng);
-                }, 100);
-            } else {
-                resetLocationMap();
-            }
+
+            document.getElementById("housing-lat").value = item.lat || "";
+            document.getElementById("housing-lng").value = item.lng || "";
+            document.getElementById("university-lat").value = item.universityLat || "";
+            document.getElementById("university-lng").value = item.universityLng || "";
+            updateLocationStatusBadge();
+
             document.getElementById("form-title").innerText = "تعديل بيانات السكن";
             document.getElementById("cancel-edit-btn").classList.remove("hidden");
             document.querySelector('[data-tab="add-housing"]').click();
