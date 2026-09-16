@@ -18,7 +18,7 @@ if (!propId) window.location.href = "index.html";
 // ========== تحميل التفاصيل ==========
 onValue(ref(db, `housings/${propId}`), (snapshot) => {
     if (!snapshot.exists()) {
-        document.getElementById("propTitle").innerText = " الوحدة غير موجودة";
+        document.getElementById("propTitle").innerText = "⚠️ الوحدة غير موجودة";
         return;
     }
     const h = { id: propId, ...snapshot.val() };
@@ -60,7 +60,29 @@ onValue(ref(db, `housings/${propId}`), (snapshot) => {
             const lat = h.lat || 27.1801, lng = h.lng || 31.1837;
             const map = L.map("propertyMap").setView([lat, lng], 14);
             L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
-            L.marker([lat, lng]).addTo(map).bindPopup(h.title).openPopup();
+
+            const housingIcon = L.divIcon({
+                html: '<div style="width:30px;height:30px;border-radius:50% 50% 50% 0;background:#c59b27;transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,.3);"><i class="fa-solid fa-house" style="transform:rotate(45deg);color:#fff;font-size:13px;"></i></div>',
+                iconSize: [30, 30], iconAnchor: [15, 30], className: ""
+            });
+            L.marker([lat, lng], { icon: housingIcon }).addTo(map).bindPopup(h.title);
+
+            const legend = document.getElementById("mapLegend");
+            let legendHtml = `<span><span class="dot" style="background:#c59b27;"></span> موقع السكن</span>`;
+            const bounds = [[lat, lng]];
+
+            if (h.universityLat && h.universityLng) {
+                const universityIcon = L.divIcon({
+                    html: '<div style="width:30px;height:30px;border-radius:50% 50% 50% 0;background:#0f172a;transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,.3);"><i class="fa-solid fa-graduation-cap" style="transform:rotate(45deg);color:#c59b27;font-size:12px;"></i></div>',
+                    iconSize: [30, 30], iconAnchor: [15, 30], className: ""
+                });
+                L.marker([h.universityLat, h.universityLng], { icon: universityIcon }).addTo(map).bindPopup("الجامعة");
+                legendHtml += `<span><span class="dot" style="background:#0f172a;"></span> الجامعة</span>`;
+                bounds.push([h.universityLat, h.universityLng]);
+            }
+
+            if (legend) legend.innerHTML = legendHtml;
+            if (bounds.length > 1) map.fitBounds(bounds, { padding: [30, 30] });
         }
     }, 100);
 
@@ -75,7 +97,7 @@ onValue(ref(db, `housings/${propId}`), (snapshot) => {
     }
 }, (error) => {
     console.error("Load error:", error);
-    document.getElementById("propTitle").innerText = " فشل تحميل البيانات";
+    document.getElementById("propTitle").innerText = "⚠️ فشل تحميل البيانات";
     showToast("فشل تحميل الوحدة", "error");
 });
 
@@ -130,7 +152,7 @@ function goToImage(index) {
 // ========== اختيار السرير ==========
 function selectBed(bedId, el, status, roomLabel) {
     if (status === "occupied") {
-        showToast("هذا السرير محجوز بالفعل", "error");
+        showToast("⚠️ هذا السرير محجوز بالفعل", "error");
         return;
     }
     document.querySelectorAll(".bed-card").forEach(b => b.classList.remove("selected"));
@@ -239,7 +261,7 @@ async function submitBooking() {
     if (!checkInDate) return showToast("📅 اختر تاريخ الاستلام", "error");
     if (!checkOutDate) return showToast("📅 اختر تاريخ المغادرة", "error");
     if (new Date(checkOutDate) <= new Date(checkInDate)) {
-        return showToast("تاريخ المغادرة يجب أن يكون بعد تاريخ الاستلام", "error");
+        return showToast("⚠️ تاريخ المغادرة يجب أن يكون بعد تاريخ الاستلام", "error");
     }
 
     const btn = document.getElementById("submitBookingBtn");
@@ -274,12 +296,12 @@ async function submitBooking() {
         await set(newRef, bookingData);
 
         closeBookingModal();
-        showToast("تم إرسال طلب الحجز بنجاح! سيتم مراجعته قريباً", "success");
+        showToast("🎉 تم إرسال طلب الحجز بنجاح! سيتم مراجعته قريباً", "success");
         selectedBedId = null;
         document.querySelectorAll(".bed-card").forEach(b => b.classList.remove("selected"));
     } catch (err) {
         console.error(err);
-        showToast("فشل الإرسال: " + err.message, "error");
+        showToast("❌ فشل الإرسال: " + err.message, "error");
     } finally {
         btn.disabled = false;
         btn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> إرسال طلب الحجز`;
