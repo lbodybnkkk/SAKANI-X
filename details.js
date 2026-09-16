@@ -18,7 +18,7 @@ if (!propId) window.location.href = "index.html";
 // ========== تحميل التفاصيل ==========
 onValue(ref(db, `housings/${propId}`), (snapshot) => {
     if (!snapshot.exists()) {
-        document.getElementById("propTitle").innerText = "الوحدة غير موجودة";
+        document.getElementById("propTitle").innerText = " الوحدة غير موجودة";
         return;
     }
     const h = { id: propId, ...snapshot.val() };
@@ -75,7 +75,7 @@ onValue(ref(db, `housings/${propId}`), (snapshot) => {
     }
 }, (error) => {
     console.error("Load error:", error);
-    document.getElementById("propTitle").innerText = "فشل تحميل البيانات";
+    document.getElementById("propTitle").innerText = " فشل تحميل البيانات";
     showToast("فشل تحميل الوحدة", "error");
 });
 
@@ -141,10 +141,8 @@ function selectBed(bedId, el, status, roomLabel) {
 
 // ========== المفضلة ==========
 async function toggleDetailFav() {
-    
     if (!currentUser) {
-        showToast("سجّل دخولك أولاً لإضافة المفضلة", "info");
-        setTimeout(() => window.location.href = "index.html", 1200);
+        window.location.href = "index.html#login";
         return;
     }
     const favRef = ref(db, `favorites/${currentUser.uid}/${propId}`);
@@ -163,19 +161,17 @@ async function toggleDetailFav() {
     btn.querySelector("i").className = `fa-${isFav ? 'solid' : 'regular'} fa-heart`;
 }
 
-
+// ========== الحجز ==========
 async function confirmBooking() {
     if (!selectedBedId) return showToast("🛏️ اختر السرير أولاً", "error");
     if (!currentUser) {
-        
-        showToast("سجّل دخولك أولاً من الصفحة الرئيسية", "info");
-        setTimeout(() => window.location.href = "index.html", 1200);
+        window.location.href = "index.html#login";
         return;
     }
 
     const complete = await isProfileComplete();
     if (!complete) {
-        showToast("استكمل بياناتك أولاً من صفحة حسابي", "info");
+        showToast("📝 استكمل بياناتك أولاً من صفحة حسابي", "info");
         setTimeout(() => window.location.href = "profile.html", 1500);
         return;
     }
@@ -240,8 +236,8 @@ async function submitBooking() {
     const checkOutDate = document.getElementById("checkOutDate").value;
     const notes = document.getElementById("bookingNotes").value.trim();
 
-    if (!checkInDate) return showToast("اختر تاريخ الاستلام", "error");
-    if (!checkOutDate) return showToast("اختر تاريخ المغادرة", "error");
+    if (!checkInDate) return showToast("📅 اختر تاريخ الاستلام", "error");
+    if (!checkOutDate) return showToast("📅 اختر تاريخ المغادرة", "error");
     if (new Date(checkOutDate) <= new Date(checkInDate)) {
         return showToast("تاريخ المغادرة يجب أن يكون بعد تاريخ الاستلام", "error");
     }
@@ -283,7 +279,7 @@ async function submitBooking() {
         document.querySelectorAll(".bed-card").forEach(b => b.classList.remove("selected"));
     } catch (err) {
         console.error(err);
-        showToast(" فشل الإرسال: " + err.message, "error");
+        showToast("فشل الإرسال: " + err.message, "error");
     } finally {
         btn.disabled = false;
         btn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> إرسال طلب الحجز`;
