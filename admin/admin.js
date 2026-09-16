@@ -88,6 +88,9 @@ document.querySelectorAll(".nav-btn").forEach(btn => {
         btn.classList.add("active", "bg-indigo-600", "text-white");
         btn.classList.remove("text-slate-400");
         document.getElementById(btn.dataset.tab).classList.remove("hidden");
+        if (btn.dataset.tab === "add-housing") {
+            setTimeout(() => locationMap?.invalidateSize(), 50);
+        }
     });
 });
 
@@ -123,6 +126,57 @@ function customConfirm(message, onConfirm) {
     overlay.querySelector("#confirmYes").onclick = () => { overlay.remove(); onConfirm(); };
     overlay.querySelector("#confirmNo").onclick = () => overlay.remove();
 }
+
+const DEFAULT_MAP_CENTER = [30.0444, 31.2357];
+let locationMap = null;
+let locationMarker = null;
+
+function initLocationMap() {
+    if (locationMap || !document.getElementById("housing-location-map")) return;
+    locationMap = L.map("housing-location-map").setView(DEFAULT_MAP_CENTER, 12);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(locationMap);
+    locationMap.on("click", (e) => setLocationMarker(e.latlng.lat, e.latlng.lng));
+}
+
+function setLocationMarker(lat, lng) {
+    if (!locationMap) return;
+    if (locationMarker) {
+        locationMarker.setLatLng([lat, lng]);
+    } else {
+        locationMarker = L.marker([lat, lng]).addTo(locationMap);
+    }
+    locationMap.setView([lat, lng], 15);
+    document.getElementById("housing-lat").value = lat;
+    document.getElementById("housing-lng").value = lng;
+    const preview = document.getElementById("locationPreview");
+    if (preview) preview.innerText = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+}
+
+function useMyCurrentLocation() {
+    if (!navigator.geolocation) return showToast("المتصفح لا يدعم تحديد الموقع", "error");
+    showToast("جاري تحديد موقعك...", "info");
+    navigator.geolocation.getCurrentPosition(
+        (pos) => setLocationMarker(pos.coords.latitude, pos.coords.longitude),
+        () => showToast("تعذّر الوصول لموقعك، حدد الموقع يدويًا على الخريطة", "error")
+    );
+}
+window.useMyCurrentLocation = useMyCurrentLocation;
+
+function resetLocationMap() {
+    document.getElementById("housing-lat").value = "";
+    document.getElementById("housing-lng").value = "";
+    const preview = document.getElementById("locationPreview");
+    if (preview) preview.innerText = "لسه مختارش موقع";
+    if (locationMarker && locationMap) {
+        locationMap.removeLayer(locationMarker);
+        locationMarker = null;
+    }
+    if (locationMap) locationMap.setView(DEFAULT_MAP_CENTER, 12);
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    setTimeout(initLocationMap, 300);
+});
 
 // ========== حساب الأسرّة تلقائياً ==========
 function calcTotalBeds() {
@@ -270,10 +324,19 @@ housingForm?.addEventListener("submit", async (e) => {
         }
     }
 
+    const lat = document.getElementById("housing-lat").value;
+    const lng = document.getElementById("housing-lng").value;
+    if (!lat || !lng) {
+        showToast("حدد موقع السكن على الخريطة قبل الحفظ", "error");
+        return;
+    }
+
     const data = {
         title: document.getElementById("title").value,
         city: document.getElementById("city").value,
         address: document.getElementById("address").value,
+        lat: Number(lat),
+        lng: Number(lng),
         type: document.getElementById("type").value,
         gender: document.getElementById("gender").value,
         section: document.getElementById("section").value,
@@ -314,6 +377,7 @@ function resetForm() {
     if (formTitle) formTitle.innerText = "إضافة وحدة سكنية جديدة";
     document.getElementById("cancel-edit-btn")?.classList.add("hidden");
     calcTotalBeds();
+    resetLocationMap();
 }
 
 document.getElementById("cancel-edit-btn")?.addEventListener("click", resetForm);
@@ -400,6 +464,14 @@ onValue(ref(db, "housings"), (snapshot) => {
             uploadedImagesBase64 = item.images || [];
             renderImagePreviews();
             calcTotalBeds();
+            if (item.lat && item.lng) {
+                setTimeout(() => {
+                    locationMap?.invalidateSize();
+                    setLocationMarker(item.lat, item.lng);
+                }, 100);
+            } else {
+                resetLocationMap();
+            }
             document.getElementById("form-title").innerText = "تعديل بيانات السكن";
             document.getElementById("cancel-edit-btn").classList.remove("hidden");
             document.querySelector('[data-tab="add-housing"]').click();
