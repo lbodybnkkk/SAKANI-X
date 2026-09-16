@@ -6,10 +6,11 @@ let currentUser = null;
 
 onAuthStateChanged(auth, async (user) => {
     if (!user) {
-        window.location.href = "index.html";
+        window.location.href = "index.html#login";
         return;
     }
     currentUser = user;
+    document.body.classList.add("profile-ready");
     await loadProfile();
 });
 
@@ -31,8 +32,6 @@ async function loadProfile() {
         document.getElementById("pfCity").value = p.city || "";
         document.getElementById("pfUniversity").value = p.university || "";
 
-        // كانت المحافظة المحفوظة بتتخزن في الحقل المخفي بس مش بتتعرض في الزرار
-        // (كان لسه شكله "اختر المحافظة..." حتى لو فعلاً محفوظة محافظة قبل كده)
         if (p.governorate) {
             const selectedLabel = document.getElementById("selectedGovernorate");
             if (selectedLabel) {
@@ -162,7 +161,48 @@ window.selectGovernorate = selectGovernorate;
 window.filterGovernorates = filterGovernorates;
 
 function handleLogout() {
-    if (confirm("هل تريد تسجيل الخروج؟")) logoutUser();
+    const overlay = document.createElement("div");
+    overlay.className = "logout-confirm-overlay";
+    overlay.innerHTML = `
+        <div class="logout-confirm-card">
+            <div class="logout-confirm-logo">
+                <i class="fa-solid fa-building-shield"></i>
+            </div>
+            <h3>SAKANI <span>X</span></h3>
+            <p>هل تريد تسجيل الخروج من حسابك؟</p>
+            <div class="logout-confirm-actions">
+                <button id="logoutConfirmYes" class="logout-confirm-yes">تسجيل الخروج</button>
+                <button id="logoutConfirmNo" class="logout-confirm-no">إلغاء</button>
+            </div>
+        </div>`;
+    document.body.appendChild(overlay);
+    document.getElementById("logoutConfirmNo").onclick = () => overlay.remove();
+    document.getElementById("logoutConfirmYes").onclick = () => {
+        overlay.remove();
+        showLogoutLoading();
+    };
+}
+
+function showLogoutLoading() {
+    const overlay = document.createElement("div");
+    overlay.className = "logout-loading-overlay";
+    overlay.innerHTML = `
+        <div class="logout-loading-logo">
+            <i class="fa-solid fa-building-shield"></i>
+        </div>
+        <h2>SAKANI <span>X</span></h2>
+        <p>جاري تسجيل الخروج...</p>
+        <div class="logout-progress-track">
+            <div id="logoutProgressBar" class="logout-progress-fill"></div>
+        </div>`;
+    document.body.appendChild(overlay);
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            const bar = document.getElementById("logoutProgressBar");
+            if (bar) bar.style.width = "100%";
+        });
+    });
+    setTimeout(() => logoutUser(), 2000);
 }
 
 window.saveProfile = saveProfile;
