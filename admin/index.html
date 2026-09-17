@@ -36,7 +36,7 @@
             <div class="flex flex-col gap-3 text-right">
                 <div class="flex flex-col gap-1.5">
                     <label class="text-xs font-semibold text-slate-400">البريد الإلكتروني</label>
-                    <input type="email" id="adminEmail" class="bg-[#0f172a] border border-slate-700 rounded-xl px-4 py-3 text-sm outline-none focus:border-indigo-500" placeholder="المطور CMD">
+                    <input type="email" id="adminEmail" class="bg-[#0f172a] border border-slate-700 rounded-xl px-4 py-3 text-sm outline-none focus:border-indigo-500" placeholder="admin@example.com">
                 </div>
                 <div class="flex flex-col gap-1.5">
                     <label class="text-xs font-semibold text-slate-400">كلمة المرور</label>
@@ -376,12 +376,12 @@
             </button>
         </div>
 
-        <div class="relative mb-3">
+        <div class="relative mb-3" style="z-index: 4000;">
             <input type="text" id="locationSearchInput" placeholder="ابحث عن مكان (مثال: جامعة المنيا)" class="w-full bg-[#0f172a] border border-slate-700 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-indigo-500 pl-10">
             <button type="button" onclick="searchLocation()" class="absolute left-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-lg bg-indigo-600 hover:bg-indigo-500 flex items-center justify-center">
                 <i class="fa-solid fa-magnifying-glass text-xs"></i>
             </button>
-            <div id="locationSearchResults" class="absolute top-full right-0 left-0 mt-1 bg-[#0f172a] border border-slate-700 rounded-xl overflow-hidden z-10 hidden max-h-48 overflow-y-auto"></div>
+            <div id="locationSearchResults" class="absolute top-full right-0 left-0 mt-1 bg-[#0f172a] border border-slate-700 rounded-xl overflow-hidden hidden max-h-48 overflow-y-auto" style="z-index: 4001;"></div>
         </div>
 
         <div id="locationPickerMap" style="height: 280px; border-radius: 14px; overflow: hidden;"></div>
