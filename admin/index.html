@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SAKANI X | لوحة الإدارة</title>
+    <title>SAKANI X | لوحة CMD</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -29,14 +29,14 @@
                 <i class="fa-solid fa-building-shield text-3xl text-indigo-400"></i>
             </div>
             <h2 class="text-xl font-extrabold mb-1">SAKANI <span class="text-indigo-400">X</span></h2>
-            <p class="text-sm text-slate-400 mb-6">تسجيل دخول لوحة الإدارة</p>
+            <p class="text-sm text-slate-400 mb-6">تسجيل دخول لوحة الادمن</p>
 
             <div id="adminLoginError" class="hidden bg-rose-500/15 border border-rose-500/30 text-rose-400 text-sm font-bold rounded-xl px-4 py-3 mb-4"></div>
 
             <div class="flex flex-col gap-3 text-right">
                 <div class="flex flex-col gap-1.5">
                     <label class="text-xs font-semibold text-slate-400">البريد الإلكتروني</label>
-                    <input type="email" id="adminEmail" class="bg-[#0f172a] border border-slate-700 rounded-xl px-4 py-3 text-sm outline-none focus:border-indigo-500" placeholder="admin@example.com">
+                    <input type="email" id="adminEmail" class="bg-[#0f172a] border border-slate-700 rounded-xl px-4 py-3 text-sm outline-none focus:border-indigo-500" placeholder="المطور CMD">
                 </div>
                 <div class="flex flex-col gap-1.5">
                     <label class="text-xs font-semibold text-slate-400">كلمة المرور</label>
@@ -119,14 +119,14 @@
     <!-- Add Housing - مع الحقول الجديدة -->
     <section id="add-housing" class="tab-content hidden">
         <div class="glass rounded-2xl p-4 md:p-6 max-w-4xl">
-            <h2 id="form-title" class="text-base md:text-lg font-extrabold mb-5">إضافة وحدة سكنية جديدة</h2>
+            <h2 id="form-title" class="text-base md:text-lg font-extrabold mb-5">إضافة سكن جديد</h2>
             <form id="housing-form">
                 <input type="hidden" id="housing-id">
                 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div class="flex flex-col gap-1.5">
                         <label class="text-xs md:text-sm font-semibold text-slate-400">عنوان الإعلان</label>
-                        <input type="text" id="title" class="bg-[#0f172a] border border-slate-700 rounded-xl px-4 py-3 text-sm outline-none focus:border-indigo-500 transition-all" placeholder="شقة مفروشة فاخرة" required>
+                        <input type="text" id="title" class="bg-[#0f172a] border border-slate-700 rounded-xl px-4 py-3 text-sm outline-none focus:border-indigo-500 transition-all" placeholder="اكتب ميزه للسكن" required>
                     </div>
                     <div class="flex flex-col gap-1.5">
                         <label class="text-xs md:text-sm font-semibold text-slate-400">المحافظة / المدينة</label>
@@ -175,11 +175,11 @@
                     </div>
                     <div class="flex flex-col gap-1.5">
                         <label class="text-xs md:text-sm font-semibold text-slate-400">الإيجار الشهري (ج.م)</label>
-                        <input type="number" id="price" class="bg-[#0f172a] border border-slate-700 rounded-xl px-4 py-3 text-sm outline-none focus:border-indigo-500" placeholder="1500" required>
+                        <input type="number" id="price" class="bg-[#0f172a] border border-slate-700 rounded-xl px-4 py-3 text-sm outline-none focus:border-indigo-500" placeholder="اكتب المبلغ" required>
                     </div>
                     <div class="flex flex-col gap-1.5">
                         <label class="text-xs md:text-sm font-semibold text-slate-400">مبلغ التأمين (ج.م)</label>
-                        <input type="number" id="deposit" class="bg-[#0f172a] border border-slate-700 rounded-xl px-4 py-3 text-sm outline-none focus:border-indigo-500" placeholder="1000" required>
+                        <input type="number" id="deposit" class="bg-[#0f172a] border border-slate-700 rounded-xl px-4 py-3 text-sm outline-none focus:border-indigo-500" placeholder="اكتب المبلغ" required>
                     </div>
                     <div class="flex flex-col gap-1.5">
                         <label class="text-xs md:text-sm font-semibold text-slate-400">رقم هاتف التواصل</label>
@@ -228,9 +228,9 @@
                         <label class="flex items-center gap-2 text-xs md:text-sm text-slate-300 cursor-pointer"><input type="checkbox" value="مصعد (أسانسير)" class="amenities-check accent-indigo-500"> مصعد</label>
                         <label class="flex items-center gap-2 text-xs md:text-sm text-slate-300 cursor-pointer"><input type="checkbox" value="غسالة ملابس" class="amenities-check accent-indigo-500"> غسالة ملابس</label>
                         <label class="flex items-center gap-2 text-xs md:text-sm text-slate-300 cursor-pointer"><input type="checkbox" value="سخان مياه" class="amenities-check accent-indigo-500"> سخان مياه</label>
-                        <label class="flex items-center gap-2 text-xs md:text-sm text-slate-300 cursor-pointer"><input type="checkbox" value="غاز طبيعي" class="amenities-check accent-indigo-500"> غاز طبيعي</label>
+                        <label class="flex items-center gap-2 text-xs md:text-sm text-slate-300 cursor-pointer"><input type="checkbox" value="مراوح" class="amenities-check accent-indigo-500"> مراوح</label>
                         <label class="flex items-center gap-2 text-xs md:text-sm text-slate-300 cursor-pointer"><input type="checkbox" value="خدمة نظافة" class="amenities-check accent-indigo-500"> خدمة نظافة</label>
-                        <label class="flex items-center gap-2 text-xs md:text-sm text-slate-300 cursor-pointer"><input type="checkbox" value="حراسة / أمن" class="amenities-check accent-indigo-500"> حراسة / أمن</label>
+                        <label class="flex items-center gap-2 text-xs md:text-sm text-slate-300 cursor-pointer"><input type="checkbox" value="غاز" class="amenities-check accent-indigo-500"> غاز</label>
                     </div>
                 </div>
 
@@ -308,7 +308,7 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div class="flex flex-col gap-1.5">
                     <label class="text-xs md:text-sm font-semibold text-slate-400">اسم القسم</label>
-                    <input type="text" id="section-name" class="bg-[#0f172a] border border-slate-700 rounded-xl px-4 py-3 text-sm outline-none focus:border-indigo-500" placeholder="مثال: حي النوادي">
+                    <input type="text" id="section-name" class="bg-[#0f172a] border border-slate-700 rounded-xl px-4 py-3 text-sm outline-none focus:border-indigo-500" placeholder=" اكتب اسم الحي">
                 </div>
                 <div class="flex flex-col gap-1.5">
                     <label class="text-xs md:text-sm font-semibold text-slate-400">أيقونة</label>
@@ -343,7 +343,7 @@
                 <h2 class="text-base md:text-lg font-extrabold flex items-center gap-2">
                     <i class="fa-solid fa-address-book text-indigo-400"></i> سجل الملاك
                 </h2>
-                <p class="text-xs md:text-sm text-slate-400 mt-1">بيانات الملاك المضافة يدويًا</p>
+                <p class="text-xs md:text-sm text-slate-400 mt-1">بيانات الملاك</p>
             </div>
             <button onclick="openLedgerFormModal()" 
                     class="w-11 h-11 md:w-auto md:px-5 md:py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm shadow-lg shadow-indigo-950/50 transition-all flex items-center justify-center gap-2">
@@ -377,7 +377,7 @@
         </div>
 
         <div class="relative mb-3" style="z-index: 4000;">
-            <input type="text" id="locationSearchInput" placeholder="ابحث عن مكان (مثال: جامعة المنيا)" class="w-full bg-[#0f172a] border border-slate-700 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-indigo-500 pl-10">
+            <input type="text" id="locationSearchInput" placeholder="ابحث عن المكان" class="w-full bg-[#0f172a] border border-slate-700 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-indigo-500 pl-10">
             <button type="button" onclick="searchLocation()" class="absolute left-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-lg bg-indigo-600 hover:bg-indigo-500 flex items-center justify-center">
                 <i class="fa-solid fa-magnifying-glass text-xs"></i>
             </button>
@@ -410,12 +410,12 @@
             </h3>
             <button onclick="closeLedgerFormModal()" class="text-slate-400 hover:text-white text-xl"><i class="fa-solid fa-xmark"></i></button>
         </div>
-        <p class="text-xs md:text-sm text-slate-400 mb-5">أضف بيانات المالك والوحدة يدوياً</p>
+        <p class="text-xs md:text-sm text-slate-400 mb-5">أضف بيانات المالك</p>
 
         <div class="flex flex-col gap-4">
             <div class="flex flex-col gap-1.5">
                 <label class="text-xs md:text-sm font-semibold text-slate-400">اسم المالك</label>
-                <input type="text" id="ledger-owner-name" class="bg-[#0f172a] border border-slate-700 rounded-xl px-4 py-3 text-sm outline-none focus:border-indigo-500" placeholder="مثال: أحمد محمد">
+                <input type="text" id="ledger-owner-name" class="bg-[#0f172a] border border-slate-700 rounded-xl px-4 py-3 text-sm outline-none focus:border-indigo-500" placeholder="اكتب الاسم">
             </div>
             <div class="flex flex-col gap-1.5">
                 <label class="text-xs md:text-sm font-semibold text-slate-400">رقم هاتف المالك</label>
@@ -423,7 +423,7 @@
             </div>
             <div class="flex flex-col gap-1.5">
                 <label class="text-xs md:text-sm font-semibold text-slate-400">عنوان العقار بالتفصيل</label>
-                <input type="text" id="ledger-property-address" class="bg-[#0f172a] border border-slate-700 rounded-xl px-4 py-3 text-sm outline-none focus:border-indigo-500" placeholder="الحي - الشارع - رقم العمارة">
+                <input type="text" id="ledger-property-address" class="bg-[#0f172a] border border-slate-700 rounded-xl px-4 py-3 text-sm outline-none focus:border-indigo-500" placeholder="الحي">
             </div>
 
             <div class="flex flex-col gap-1.5">
@@ -434,7 +434,7 @@
 
             <div class="flex flex-col gap-1.5">
                 <label class="text-xs md:text-sm font-semibold text-slate-400">ملاحظات إضافية</label>
-                <textarea id="ledger-notes" rows="3" class="bg-[#0f172a] border border-slate-700 rounded-xl px-4 py-3 text-sm outline-none focus:border-indigo-500 resize-none" placeholder="أي تفاصيل عن المالك أو العقار..."></textarea>
+                <textarea id="ledger-notes" rows="3" class="bg-[#0f172a] border border-slate-700 rounded-xl px-4 py-3 text-sm outline-none focus:border-indigo-500 resize-none" placeholder="اكتب الملاحظه"></textarea>
             </div>
 
             <button class="mt-1 bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-6 py-3 rounded-xl text-sm transition-all w-full" onclick="addLedgerEntry()">
