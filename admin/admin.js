@@ -43,7 +43,7 @@ onAuthStateChanged(auth, async (user) => {
         }
         showAdminDashboard();
     } catch (err) {
-        showAdminLoginScreen("تعذّر التحقق من صلاحياتك، حاول تاني");
+        showAdminLoginScreen("تعذّر التحقق من صلاحياتك");
     }
 });
 
@@ -255,9 +255,7 @@ async function searchLocation() {
         if (!data.length) {
             resultsBox.innerHTML = `
                 <div class="p-3 text-xs text-slate-400 leading-relaxed">
-                    مفيش نتائج لـ "${query}". خرائط OpenStreetMap لسه ماغطتش كل أرقام العمائر في مصر،
-                    فجرّب تبحث باسم الحي أو معلم قريب (زي جامعة أو ميدان) بدل رقم العمارة بالظبط،
-                    أو حدد الموقع يدويًا بالدوس المباشر على الخريطة.
+                  مفيش نتائج لــ "${query}"
                 </div>`;
             return;
         }
@@ -274,7 +272,7 @@ async function searchLocation() {
             });
         });
     } catch (err) {
-        resultsBox.innerHTML = `<div class="p-3 text-xs text-rose-400">تعذّر البحث، جرّب تاني</div>`;
+        resultsBox.innerHTML = `<div class="p-3 text-xs text-rose-400">جرب تاني</div>`;
     }
 }
 window.searchLocation = searchLocation;
@@ -357,7 +355,7 @@ async function compressImageToBase64(file, maxW = 800, maxH = 800, quality = 0.7
 
                 const sizeKB = (base64.length * 3) / 4 / 1024;
                 if (sizeKB > 300) {
-                    console.warn(` حجم الصورة بعد الضغط: ${sizeKB.toFixed(0)}KB`);
+                    console.warn(` حجم الصورة: ${sizeKB.toFixed(0)}KB`);
                 }
 
                 resolve(base64);
@@ -478,7 +476,7 @@ housingForm?.addEventListener("submit", async (e) => {
     const lat = document.getElementById("housing-lat").value;
     const lng = document.getElementById("housing-lng").value;
     if (!lat || !lng) {
-        showToast("حدد موقع السكن على الخريطة قبل الحفظ", "error");
+        showToast("حدد موقع السكن", "error");
         return;
     }
     const uniLat = document.getElementById("university-lat").value;
