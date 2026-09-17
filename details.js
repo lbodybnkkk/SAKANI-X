@@ -18,7 +18,7 @@ if (!propId) window.location.href = "index.html";
 // ========== تحميل التفاصيل ==========
 onValue(ref(db, `housings/${propId}`), (snapshot) => {
     if (!snapshot.exists()) {
-        document.getElementById("propTitle").innerText = "⚠️ الوحدة غير موجودة";
+        document.getElementById("propTitle").innerText = "الوحدة غير موجودة";
         return;
     }
     const h = { id: propId, ...snapshot.val() };
@@ -97,7 +97,7 @@ onValue(ref(db, `housings/${propId}`), (snapshot) => {
     }
 }, (error) => {
     console.error("Load error:", error);
-    document.getElementById("propTitle").innerText = "⚠️ فشل تحميل البيانات";
+    document.getElementById("propTitle").innerText = "فشل تحميل البيانات";
     showToast("فشل تحميل الوحدة", "error");
 });
 
@@ -152,7 +152,7 @@ function goToImage(index) {
 // ========== اختيار السرير ==========
 function selectBed(bedId, el, status, roomLabel) {
     if (status === "occupied") {
-        showToast("⚠️ هذا السرير محجوز بالفعل", "error");
+        showToast("هذا السرير محجوز بالفعل", "error");
         return;
     }
     document.querySelectorAll(".bed-card").forEach(b => b.classList.remove("selected"));
@@ -261,7 +261,7 @@ async function submitBooking() {
     if (!checkInDate) return showToast("📅 اختر تاريخ الاستلام", "error");
     if (!checkOutDate) return showToast("📅 اختر تاريخ المغادرة", "error");
     if (new Date(checkOutDate) <= new Date(checkInDate)) {
-        return showToast("⚠️ تاريخ المغادرة يجب أن يكون بعد تاريخ الاستلام", "error");
+        return showToast(" تاريخ المغادرة يجب أن يكون بعد تاريخ الاستلام", "error");
     }
 
     const btn = document.getElementById("submitBookingBtn");
@@ -296,12 +296,12 @@ async function submitBooking() {
         await set(newRef, bookingData);
 
         closeBookingModal();
-        showToast("🎉 تم إرسال طلب الحجز بنجاح! سيتم مراجعته قريباً", "success");
+        showToast(" تم إرسال طلب الحجز بنجاح! سيتم مراجعته قريباً", "success");
         selectedBedId = null;
         document.querySelectorAll(".bed-card").forEach(b => b.classList.remove("selected"));
     } catch (err) {
         console.error(err);
-        showToast("❌ فشل الإرسال: " + err.message, "error");
+        showToast(" فشل الإرسال: " + err.message, "error");
     } finally {
         btn.disabled = false;
         btn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> إرسال طلب الحجز`;
