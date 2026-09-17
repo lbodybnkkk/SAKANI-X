@@ -1,6 +1,7 @@
 // profile.js
 import { auth, db, ref, get, update } from "./firebase-config.js";
 import { onAuthStateChanged, logoutUser, showToast } from "./auth.js";
+import { updateProfile } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 let currentUser = null;
 
@@ -15,78 +16,130 @@ onAuthStateChanged(auth, async (user) => {
 });
 
 async function loadProfile() {
-    document.getElementById("profileName").innerText = currentUser.displayName || "مستخدم";
-    document.getElementById("profileEmail").innerText = currentUser.email;
+    if (!currentUser) return;
+
+    // 1. عرض إيميل الحساب المسجل حالياً بشكل ديناميكي
+    const emailElem = document.getElementById("profileEmail");
+    if (emailElem) {
+        emailElem.innerText = currentUser.email || "";
+    }
+
+    // 2. تعيين اسم مبدئي
+    const nameElem = document.getElementById("profileName");
+    if (nameElem) {
+        nameElem.innerText = currentUser.displayName || "مستخدم";
+    }
 
     const avatar = document.getElementById("profileAvatar");
-    if (currentUser.photoURL) {
+    if (avatar && currentUser.photoURL) {
         avatar.innerHTML = `<img src="${currentUser.photoURL}" alt="avatar">`;
     }
 
-    const snap = await get(ref(db, `users/${currentUser.uid}`));
-    if (snap.exists()) {
-        const p = snap.val();
-        document.getElementById("pfName").value = p.name || currentUser.displayName || "";
-        document.getElementById("pfPhone").value = p.phone || "";
-        document.getElementById("pfGovernorate").value = p.governorate || "";
-        document.getElementById("pfCity").value = p.city || "";
-        document.getElementById("pfUniversity").value = p.university || "";
+    try {
+        // 3. جلب بيانات المستخدم المسجل حالياً من قاعدة البيانات بواسطة uid الخاص به
+        const snap = await get(ref(db, `users/${currentUser.uid}`));
+        if (snap.exists()) {
+            const p = snap.val();
 
-        if (p.governorate) {
-            const selectedLabel = document.getElementById("selectedGovernorate");
-            if (selectedLabel) {
-                selectedLabel.innerText = p.governorate;
-                selectedLabel.classList.remove("text-slate-400");
-                selectedLabel.classList.add("text-slate-900", "font-bold");
+            // تحديث الاسم العلوي بالاسم المخزن في قاعدة البيانات
+            if (p.name && nameElem) {
+                nameElem.innerText = p.name;
+            }
+
+            // تعبئة حقول الإدخال
+            if (document.getElementById("pfName")) document.getElementById("pfName").value = p.name || currentUser.displayName || "";
+            if (document.getElementById("pfPhone")) document.getElementById("pfPhone").value = p.phone || "";
+            if (document.getElementById("pfGovernorate")) document.getElementById("pfGovernorate").value = p.governorate || "";
+            if (document.getElementById("pfCity")) document.getElementById("pfCity").value = p.city || "";
+            if (document.getElementById("pfUniversity")) document.getElementById("pfUniversity").value = p.university || "";
+
+            if (p.governorate) {
+                const selectedLabel = document.getElementById("selectedGovernorate");
+                if (selectedLabel) {
+                    selectedLabel.innerText = p.governorate;
+                    selectedLabel.classList.remove("text-slate-400");
+                    selectedLabel.classList.add("text-slate-900", "font-bold");
+                }
+            }
+
+            if (p.name && p.phone && p.governorate) {
+                const badge = document.getElementById("profileBadge");
+                if (badge) {
+                    badge.style.background = "rgba(16, 185, 129, 0.15)";
+                    badge.style.color = "var(--success)";
+                    badge.innerHTML = `<i class="fa-solid fa-circle-check"></i> حسابك مكتمل`;
+                }
             }
         }
-
-        if (p.name && p.phone && p.governorate) {
-            const badge = document.getElementById("profileBadge");
-            badge.style.background = "rgba(16, 185, 129, 0.15)";
-            badge.style.color = "var(--success)";
-            badge.innerHTML = `<i class="fa-solid fa-circle-check"></i> حسابك مكتمل`;
-        }
+    } catch (err) {
+        console.error("خطأ أثناء تحميل الملف الشخصي:", err);
     }
 }
 
 async function saveProfile() {
-    const name = document.getElementById("pfName").value.trim();
-    const phone = document.getElementById("pfPhone").value.trim();
-    const governorate = document.getElementById("pfGovernorate").value;
-    const city = document.getElementById("pfCity").value.trim();
-    const university = document.getElementById("pfUniversity").value.trim();
+    const nameInput = document.getElementById("pfName");
+    const phoneInput = document.getElementById("pfPhone");
+    const govInput = document.getElementById("pfGovernorate");
+    const cityInput = document.getElementById("pfCity");
+    const uniInput = document.getElementById("pfUniversity");
+
+    const name = nameInput ? nameInput.value.trim() : "";
+    const phone = phoneInput ? phoneInput.value.trim() : "";
+    const governorate = govInput ? govInput.value : "";
+    const city = cityInput ? cityInput.value.trim() : "";
+    const university = uniInput ? uniInput.value.trim() : "";
 
     if (!name || name.length < 3) return showToast("👤 برجاء إدخال اسمك الكامل (3 أحرف على الأقل)", "error");
     if (!/^01[0125]\d{8}$/.test(phone)) return showToast("📱 رقم هاتف مصري غير صحيح (مثال: 01012345678)", "error");
     if (!governorate) return showToast("📍 برجاء اختيار المحافظة", "error");
 
     const btn = document.getElementById("saveProfileBtn");
-    btn.disabled = true;
-    btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> جاري الحفظ...`;
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> جاري الحفظ...`;
+    }
 
     try {
+        // تحديث الاسم داخل نظام المصادقة (Firebase Auth)
+        if (auth.currentUser) {
+            await updateProfile(auth.currentUser, { displayName: name });
+        }
+
+        // تحديث البيانات في قاعدة البيانات تحت uid الحساب الحالي
         await update(ref(db, `users/${currentUser.uid}`), {
-            name, phone, governorate, city, university,
+            name,
+            phone,
+            governorate,
+            city,
+            university,
             profileComplete: true,
             updatedAt: Date.now()
         });
+
         showToast("✅ تم حفظ بياناتك بنجاح", "success");
-        document.getElementById("profileName").innerText = name;
+
+        const nameElem = document.getElementById("profileName");
+        if (nameElem) nameElem.innerText = name;
+
         const badge = document.getElementById("profileBadge");
-        badge.style.background = "rgba(16, 185, 129, 0.15)";
-        badge.style.color = "var(--success)";
-        badge.innerHTML = `<i class="fa-solid fa-circle-check"></i> حسابك مكتمل`;
-        
+        if (badge) {
+            badge.style.background = "rgba(16, 185, 129, 0.15)";
+            badge.style.color = "var(--success)";
+            badge.innerHTML = `<i class="fa-solid fa-circle-check"></i> حسابك مكتمل`;
+        }
+
         setTimeout(() => window.location.href = "index.html", 1200);
     } catch (err) {
         console.error(err);
         showToast("فشل الحفظ: " + err.message, "error");
     } finally {
-        btn.disabled = false;
-        btn.innerHTML = `<i class="fa-solid fa-floppy-disk"></i> حفظ البيانات`;
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = `<i class="fa-solid fa-floppy-disk"></i> حفظ البيانات`;
+        }
     }
 }
+
 const governorates = [
     "القاهرة", "الجيزة", "الإسكندرية", "الدقهلية", "الشرقية", "القليوبية",
     "المنوفية", "الغربية", "كفر الشيخ", "دمياط", "بورسعيد", "الإسماعيلية",
@@ -118,31 +171,43 @@ function toggleGovernorateDropdown(e) {
     if (e) e.stopPropagation();
     const dd = document.getElementById("governorateDropdown");
     const chev = document.getElementById("govChevron");
+    if (!dd) return;
     const isHidden = dd.classList.contains("hidden");
     
     if (isHidden) {
         dd.classList.remove("hidden");
-        chev.style.transform = "rotate(180deg)";
+        if (chev) chev.style.transform = "rotate(180deg)";
         renderGovernorates();
-        setTimeout(() => document.getElementById("govSearch").focus(), 100);
+        setTimeout(() => {
+            const searchInput = document.getElementById("govSearch");
+            if (searchInput) searchInput.focus();
+        }, 100);
     } else {
         dd.classList.add("hidden");
-        chev.style.transform = "rotate(0deg)";
+        if (chev) chev.style.transform = "rotate(0deg)";
     }
 }
 
 function selectGovernorate(gov) {
     const selected = document.getElementById("selectedGovernorate");
-    selected.innerText = gov;
-    selected.classList.remove("text-slate-400");
-    selected.classList.add("text-slate-900", "font-bold");
-    document.getElementById("pfGovernorate").value = gov;
-    document.getElementById("governorateDropdown").classList.add("hidden");
-    document.getElementById("govChevron").style.transform = "rotate(0deg)";
+    if (selected) {
+        selected.innerText = gov;
+        selected.classList.remove("text-slate-400");
+        selected.classList.add("text-slate-900", "font-bold");
+    }
+    const govInput = document.getElementById("pfGovernorate");
+    if (govInput) govInput.value = gov;
+
+    const dd = document.getElementById("governorateDropdown");
+    if (dd) dd.classList.add("hidden");
+
+    const chev = document.getElementById("govChevron");
+    if (chev) chev.style.transform = "rotate(0deg)";
 }
 
 function filterGovernorates() {
-    const query = document.getElementById("govSearch").value;
+    const searchInput = document.getElementById("govSearch");
+    const query = searchInput ? searchInput.value : "";
     renderGovernorates(query);
 }
 
