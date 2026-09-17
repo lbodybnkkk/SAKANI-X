@@ -239,11 +239,26 @@ async function searchLocation() {
     if (!query) return;
     resultsBox.classList.remove("hidden");
     resultsBox.innerHTML = `<div class="p-3 text-xs text-slate-400"><i class="fa-solid fa-spinner fa-spin"></i> جاري البحث...</div>`;
+
+    const runSearch = async (q) => {
+        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=8&accept-language=ar&countrycodes=eg&q=${encodeURIComponent(q)}`);
+        return res.json();
+    };
+
     try {
-        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=5&accept-language=ar&q=${encodeURIComponent(query)}`);
-        const data = await res.json();
+        let data = await runSearch(query);
+        // لو مفيش نتايج، جرّب تاني مع إضافة "مصر" آخر الكلام - أحيانًا بيحسّن دقة البحث
+        if (!data.length && !query.includes("مصر")) {
+            data = await runSearch(`${query} مصر`);
+        }
+
         if (!data.length) {
-            resultsBox.innerHTML = `<div class="p-3 text-xs text-slate-400">مفيش نتائج، جرّب اسم مختلف</div>`;
+            resultsBox.innerHTML = `
+                <div class="p-3 text-xs text-slate-400 leading-relaxed">
+                    مفيش نتائج لـ "${query}". خرائط OpenStreetMap لسه ماغطتش كل أرقام العمائر في مصر،
+                    فجرّب تبحث باسم الحي أو معلم قريب (زي جامعة أو ميدان) بدل رقم العمارة بالظبط،
+                    أو حدد الموقع يدويًا بالدوس المباشر على الخريطة.
+                </div>`;
             return;
         }
         resultsBox.innerHTML = data.map((r, i) => `
@@ -263,6 +278,16 @@ async function searchLocation() {
     }
 }
 window.searchLocation = searchLocation;
+
+document.addEventListener("DOMContentLoaded", () => {
+    const searchInput = document.getElementById("locationSearchInput");
+    searchInput?.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+            e.preventDefault();
+            searchLocation();
+        }
+    });
+});
 
 function useMyCurrentLocation() {
     if (!navigator.geolocation) return showToast("المتصفح لا يدعم تحديد الموقع", "error");
