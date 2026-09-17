@@ -48,26 +48,6 @@ async function createBooking(user, bookingData) {
     return newRef.key;
 }
 
-// ملحوظة أمان/أداء مهمة:
-// الدالتين دول كانوا بيسحبوا عقدة "bookings" كاملة (حجوزات كل المستخدمين) لكل متصفح
-// وبعدين بيفلتروا في الجافاسكريبت. ده كان بيسبب بطء في تحميل الصفحة كل ما تكبر
-// قاعدة البيانات، وكمان بيبعت لأي متصفح بيانات حجوزات مستخدمين تانيين (اسم، تليفون،
-// محافظة) حتى لو الواجهة مش بتعرضها - أي حد يفتح Network tab في المتصفح يقدر يشوفها.
-//
-// الحل: استخدام query() + orderByChild("userId") + equalTo(userId) عشان فايربيز
-// نفسه يرجّع بس الحجوزات بتاعة اليوزر ده، مش كل الجدول.
-//
-// ⚠️ الفلترة دي بتقلل البيانات المنقولة، لكن الحماية الحقيقية النهائية لازم تتظبط
-// كمان من Firebase Realtime Database Rules (من لوحة تحكم Firebase، مش من الكود)
-// بحيث تكون:
-//   "bookings": {
-//     ".indexOn": "userId",
-//     "$bookingId": {
-//       ".read": "auth != null && (data.child('userId').val() === auth.uid || root.child('admins').child(auth.uid).exists())"
-//     }
-//   }
-// من غير الـ Rule ده، أي حد يعرف يبعت طلب مباشر لفايربيز (حتى لو مش من الموقع)
-// يقدر يشوف كل الحجوزات بغض النظر عن الكود بتاعنا.
 
 function listenToUserBookings(userId, callback) {
     const bookingsQuery = query(ref(db, "bookings"), orderByChild("userId"), equalTo(userId));
